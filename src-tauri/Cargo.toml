@@ -1,6 +1,6 @@
 [package]
 name = "bits-flow-ai"
-version = "1.4.0"
+version = "1.5.0"
 description = "BITS Flow AI — isolated browser profiles for AI providers"
 authors = ["Banten IT Solutions"]
 edition = "2024"
