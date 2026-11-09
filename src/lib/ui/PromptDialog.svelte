@@ -83,9 +83,9 @@
           }))}
         />
       </label>
-      <div class="col-span-2 flex flex-row items-center justify-end gap-1.5 pt-6">
-        <span class="sr-only">{m.promptsPinned()}</span>
-        <label class="flex h-9 cursor-pointer items-center select-none">
+      <div class="col-span-2 flex flex-col gap-1.5">
+        <span class="text-sm font-medium">{m.promptsPinned()}</span>
+        <label class="flex h-9 cursor-pointer items-center justify-end select-none">
           <input
             type="checkbox"
             class="peer sr-only"
