@@ -1,5 +1,5 @@
-import { get, writable } from "svelte/store";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { get, writable } from "svelte/store";
 import { getSettings, listAccounts, listPrompts, listProviders, listRecent } from "./api";
 import { m } from "./paraglide/messages";
 import { resolveLocale, resolveTheme } from "./settings";
