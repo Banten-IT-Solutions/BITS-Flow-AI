@@ -3,6 +3,13 @@
 All notable changes to BITS Flow AI are documented here. The format follows Keep a Changelog
 and the project uses semantic versioning.
 
+## [1.1.6](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.1.5...1.1.6) (2026-11-09)
+
+
+### Bug Fixes
+
+* stop applying runtime theme events that repaint WebKit view ([ac940fb](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/ac940fb921573236dedfb1c6994ad8b4b1fdd6c2))
+
 ## [1.1.5](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.1.4...1.1.5) (2026-11-09)
 
 
