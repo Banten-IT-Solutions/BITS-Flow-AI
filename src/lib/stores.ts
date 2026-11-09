@@ -80,6 +80,9 @@ async function resolveSystemThemeDark(): Promise<void> {
 
 export function applyTheme() {
   const { theme } = get(settings);
+  // Keep stylesheet's initial light value until portal-backed preference is
+  // ready; otherwise loadAll() can paint light before async theme resolution.
+  if (theme === "system" && systemThemeDark === null) return;
   const resolved = resolveTheme(theme, systemThemeDark ?? false);
   if (typeof document !== "undefined") {
     document.documentElement.dataset.theme = resolved;
@@ -93,18 +96,10 @@ export function applyLocale() {
 }
 
 export function initSystemListeners(): () => void {
-  // Resolve the real system preference once (portal-backed) and follow
-  // Tauri theme events; never the WebKitGTK media query (see above).
+  // Snapshot the portal-backed theme once at startup. On the affected
+  // WebKitGTK/GTK stack, runtime theme notifications trigger contradictory
+  // GTK preference updates and repeatedly repaint the entire webview. Do not
+  // subscribe to either WebKit's media query or GTK/Tauri theme events.
   void resolveSystemThemeDark();
-  let unlisten: (() => void) | null = null;
-  void getCurrentWindow()
-    .onThemeChanged((e) => {
-      systemThemeDark = e.payload === "dark";
-      applyTheme();
-    })
-    .then((fn) => {
-      unlisten = fn;
-    })
-    .catch(() => {});
-  return () => unlisten?.();
+  return () => {};
 }
