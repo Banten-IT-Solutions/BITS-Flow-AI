@@ -124,9 +124,14 @@ export function isValidProviderUrl(url: string): boolean {
   }
 }
 
-/** Open the GitHub releases page in the user's default browser. */
-export function openReleasePage() {
-  return invoke("open_release_page");
+/** Download the release `.deb` at `url` (pre-validated) and install it via pkexec. */
+export function installDebUpdate(url: string) {
+  return invoke("install_deb_update", { url });
+}
+
+/** Exit the app so the freshly installed binary starts next launch. */
+export function restartApp() {
+  return invoke("restart_app");
 }
 
 /**

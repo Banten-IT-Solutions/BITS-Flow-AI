@@ -93,6 +93,8 @@
   "errorsLoadFailed": "Could not load your data. Try restarting the app.",
   "updateAvailable": "Version {version} is available",
   "updateAction": "Update",
+  "updateWorking": "Installing…",
+  "updateInstalled": "Update installed, restarting…",
   "appVersion": "Version {version}",
   "commonExport": "Export",
   "commonImport": "Import",

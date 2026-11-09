@@ -93,6 +93,8 @@
   "errorsLoadFailed": "Gagal memuat data. Coba mulai ulang aplikasi.",
   "updateAvailable": "Versi {version} tersedia",
   "updateAction": "Perbarui",
+  "updateWorking": "Memasang…",
+  "updateInstalled": "Pembaruan terpasang, memulai ulang…",
   "appVersion": "Versi {version}",
   "commonExport": "Ekspor",
   "commonImport": "Impor",

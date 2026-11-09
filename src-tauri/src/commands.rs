@@ -3,6 +3,7 @@
 //! SQLite only if per-record queries or locking across processes become real.
 
 use std::fs;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Mutex, MutexGuard, OnceLock};
@@ -99,20 +100,77 @@ impl Settings {
     }
 }
 
-/// Open the GitHub releases page in the user's default browser. The URL is
-/// fixed here (never passed from the webview) so the command cannot be
-/// abused to open arbitrary targets.
+/// GitHub repo of this app; must mirror `REPO_URL` in `src/lib/types.ts`.
+const REPO_URL: &str = "https://github.com/Banten-IT-Solutions/BITS-Flow-AI";
+
+/// True when `url` is a release-asset download of this exact repo. Update
+/// installs run as root, so the URL is validated again here (not just in the
+/// UI) — the Rust side is the trust boundary.
+fn is_official_asset_url(url: &str) -> bool {
+    url.starts_with(&format!("{REPO_URL}/releases/download/")) && url.ends_with(".deb")
+}
+
+/// Ceiling for an update download; releases are ~2 MB today, so this only
+/// trips on a corrupt or hostile response. ponytail: raise or stream-check
+/// the published asset size if releases ever grow past it.
+const MAX_DEB_BYTES: u64 = 64 * 1024 * 1024;
+
+/// Download the `.deb` at `url` and install it via `pkexec dpkg -i`, which
+/// asks for the user's password through the desktop polkit agent. The file is
+/// created exclusively in the temp dir so a pre-placed symlink in the
+/// world-writable directory cannot redirect the root-run install.
 #[tauri::command]
-pub fn open_release_page() -> Result<(), String> {
-    const RELEASES_URL: &str =
-        "https://github.com/Banten-IT-Solutions/BITS-Flow-AI/releases/latest";
-    let mut child = std::process::Command::new("xdg-open")
-        .arg(RELEASES_URL)
-        .spawn()
-        .map_err(|e| e.to_string())?;
-    // xdg-open hands off to the desktop portal and exits immediately; wait so
-    // the quick exit does not leave a zombie process behind.
-    child.wait().map(|_| ()).map_err(|e| e.to_string())
+pub fn install_deb_update(url: String) -> Result<(), String> {
+    if !is_official_asset_url(&url) {
+        return Err("refusing to install from untrusted update URL".into());
+    }
+    let path = std::env::temp_dir().join(format!(
+        "bits-flow-ai-{}-{}.deb",
+        env!("CARGO_PKG_VERSION"),
+        std::process::id()
+    ));
+    let outcome = (|| -> Result<(), String> {
+        let mut file = fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&path)
+            .map_err(|e| e.to_string())?;
+        let download = ureq::get(&url).call().map_err(|e| e.to_string())?;
+        let mut reader = download.into_reader();
+        let mut buffer = [0u8; 16 * 1024];
+        let mut total: u64 = 0;
+        loop {
+            let read = reader.read(&mut buffer).map_err(|e| e.to_string())?;
+            if read == 0 {
+                break;
+            }
+            total += read as u64;
+            if total > MAX_DEB_BYTES {
+                return Err("update download exceeds size limit".into());
+            }
+            file.write_all(&buffer[..read]).map_err(|e| e.to_string())?;
+        }
+        drop(file);
+        let status = std::process::Command::new("pkexec")
+            .arg("dpkg")
+            .arg("-i")
+            .arg(&path)
+            .status()
+            .map_err(|e| e.to_string())?;
+        if status.success() {
+            Ok(())
+        } else {
+            Err("dpkg install failed".into())
+        }
+    })();
+    let _ = fs::remove_file(&path);
+    outcome
+}
+
+/// Exit and hand over to the freshly installed binary.
+#[tauri::command]
+pub fn restart_app(app: AppHandle) {
+    app.restart();
 }
 
 /// Write a user-picked export file. The path always comes from the native
@@ -510,5 +568,20 @@ mod tests {
     #[test]
     fn empty_input_stays_empty() {
         assert!(cap_recent(Vec::new()).is_empty());
+    }
+
+    #[test]
+    fn accepts_only_this_repos_deb_assets() {
+        let base = format!("{REPO_URL}/releases/download/1.2.3/");
+        assert!(is_official_asset_url(&format!(
+            "{base}BITS%20Flow%20AI_1.2.3_amd64.deb"
+        )));
+        assert!(!is_official_asset_url("https://evil.example/x.deb"));
+        assert!(!is_official_asset_url(&format!(
+            "{REPO_URL}/releases/download/1.2.3/x.zip"
+        )));
+        assert!(!is_official_asset_url(
+            "https://github.com/Other/Repo/releases/download/1.2.3/x.deb"
+        ));
     }
 }

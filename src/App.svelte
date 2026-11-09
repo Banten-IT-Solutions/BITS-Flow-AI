@@ -13,11 +13,11 @@
   import { listen } from "@tauri-apps/api/event";
   import { commandError } from "./lib/errors";
   import { lastUsedProvider, launchPersona, refreshOpenPersonas } from "./lib/launch";
-  import { openReleasePage } from "./lib/api";
+  import { installDebUpdate, restartApp } from "./lib/api";
   import { m } from "./lib/paraglide/messages";
   import { setLocale } from "./lib/paraglide/runtime";
   import { toast } from "./lib/toast";
-  import { checkForUpdate } from "./lib/updates";
+  import { checkForUpdate, type ReleaseUpdate } from "./lib/updates";
   import { activeMenu, accounts, loadAll, providers, recent, uiLocale } from "./lib/stores";
   import type { Account, MenuId } from "./lib/types";
   import logo from "./assets/logo.png";
@@ -49,14 +49,29 @@
     settings: m.menuSettings,
   };
 
-  /** Tag of the newest GitHub release when it is newer than this build, else null. */
-  let updateVersion = $state<string | null>(null);
+  /** Newest GitHub release newer than this build (tag + `.deb` URL), else null. */
+  let updateVersion = $state<ReleaseUpdate | null>(null);
+  let updating = $state(false);
+
+  /** Download + pkexec-install the update, then restart into the new version. */
+  async function runUpdate() {
+    if (!updateVersion || updating) return;
+    updating = true;
+    try {
+      await installDebUpdate(updateVersion.debUrl);
+      toast(m.updateInstalled());
+      await restartApp();
+    } catch (e) {
+      toast(commandError(e));
+      updating = false;
+    }
+  }
 
   onMount(() => {
     loadAll()
       .then(() => setLocale(get(uiLocale), { reload: false }))
       .catch((e) => console.error("init failed", e));
-    void checkForUpdate(pkg.version).then((tag) => (updateVersion = tag));
+    void checkForUpdate(pkg.version).then((update) => (updateVersion = update));
     void refreshOpenPersonas();
     // Persona windows can be closed outside this view; Rust emits this event
     // so the Home badge stays accurate.
@@ -145,15 +160,13 @@
       {#if updateVersion}
         <button
           type="button"
-          class="badge shrink-0 cursor-pointer transition-opacity duration-150 hover:opacity-90"
-          title={m.updateAvailable({ version: updateVersion })}
-          onclick={() =>
-            openReleasePage().catch((e) => {
-              toast(commandError(e));
-            })}
+          class="badge shrink-0 cursor-pointer transition-opacity duration-150 hover:opacity-90 disabled:cursor-progress disabled:opacity-70"
+          title={m.updateAvailable({ version: updateVersion.tag })}
+          disabled={updating}
+          onclick={() => void runUpdate()}
         >
           <ArrowUpCircle class="size-3" />
-          {m.updateAction()}
+          {updating ? m.updateWorking() : m.updateAction()}
         </button>
       {/if}
     </div>

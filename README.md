@@ -34,19 +34,19 @@ for daily free-tier AI image & video workflows.
 
 ## ✨ Features
 
-| Feature                   | Description                                                                     |
-| ------------------------- | ------------------------------------------------------------------------------- |
-| **Persona Accounts**      | One isolated WebKitGTK data dir per account — cookies & sessions never cross    |
-| **Hot Profile Switching** | Open persona windows stay cached (LRU) — switching is instant, no re-login      |
-| **Dynamic Providers**     | Add any provider: name, URL, category (Image / Video / Both), engine            |
-| **Generate Workspace**    | Image & Video tabs filter providers by category and launch with one prompt copy |
-| **Prompt Library**        | Save, pin, categorize, and copy prompts; reuse across providers                 |
-| **Bilingual UI**          | Bahasa Indonesia & English, configurable in Settings, follows system by default |
-| **Dark-only UI**          | Professional dark theme, locked for consistency across views                    |
-| **Engine Fallback**       | Per-provider engine: WebKitGTK webview or system Chrome subprocess              |
-| **Export & Import**       | Back up and restore accounts & prompts as JSON, in Settings                     |
-| **Update Checker**        | Compares the running version against GitHub Releases at startup                 |
-| **Local-first Storage**   | Accounts, providers, prompts, and settings as JSON in the app data dir          |
+| Feature                   | Description                                                                                         |
+| ------------------------- | --------------------------------------------------------------------------------------------------- |
+| **Persona Accounts**      | One isolated WebKitGTK data dir per account — cookies & sessions never cross                        |
+| **Hot Profile Switching** | Open persona windows stay cached (LRU) — switching is instant, no re-login                          |
+| **Dynamic Providers**     | Add any provider: name, URL, category (Image / Video / Both), engine                                |
+| **Generate Workspace**    | Image & Video tabs filter providers by category and launch with one prompt copy                     |
+| **Prompt Library**        | Save, pin, categorize, and copy prompts; reuse across providers                                     |
+| **Bilingual UI**          | Bahasa Indonesia & English, configurable in Settings, follows system by default                     |
+| **Dark-only UI**          | Professional dark theme, locked for consistency across views                                        |
+| **Engine Fallback**       | Per-provider engine: WebKitGTK webview or system Chrome subprocess                                  |
+| **Export & Import**       | Back up and restore accounts & prompts as JSON, in Settings                                         |
+| **In-app Updates**        | Compares the running version against GitHub Releases and installs the `.deb` in-app (polkit prompt) |
+| **Local-first Storage**   | Accounts, providers, prompts, and settings as JSON in the app data dir                              |
 
 ## 🛠️ Tech Stack
 
