@@ -3,6 +3,14 @@
 All notable changes to BITS Flow AI are documented here. The format follows Keep a Changelog
 and the project uses semantic versioning.
 
+# [1.4.0](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.3.0...1.4.0) (2026-11-09)
+
+
+### Features
+
+* install updates in-app from GitHub Releases ([95464fd](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/95464fd6bf610eab7920e9d43fd4d6d0b95cc932))
+* redesign Generate with provider cards and grouped action panel ([32fcfcd](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/32fcfcd0d3af35ed32c314368def0cb692ad3563))
+
 # [1.3.0](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.2.3...1.3.0) (2026-11-09)
 
 
