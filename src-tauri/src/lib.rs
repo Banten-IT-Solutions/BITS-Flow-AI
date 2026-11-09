@@ -2,6 +2,7 @@ mod commands;
 mod persona;
 
 use persona::PersonaState;
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -9,16 +10,13 @@ pub fn run() {
         .manage(PersonaState::default())
         .on_window_event(|window, event| {
             // "Hide to background" close behavior for the manager window.
-            if let tauri::WindowEvent::CloseRequested { api } = event {
-                if window.label() != "main" {
-                    return;
-                }
-                if let Ok(settings) = commands::load_settings(window.app_handle()) {
-                    if settings.close_behavior == commands::CloseBehavior::Hide {
-                        api.prevent_close();
-                        let _ = window.hide();
-                    }
-                }
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event
+                && window.label() == "main"
+                && commands::load_settings(window.app_handle())
+                    .is_ok_and(|s| s.close_behavior == commands::CloseBehavior::Hide)
+            {
+                api.prevent_close();
+                let _ = window.hide();
             }
         })
         .invoke_handler(tauri::generate_handler![

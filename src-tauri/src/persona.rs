@@ -12,8 +12,7 @@ use crate::commands;
 
 /// Chrome UA so providers that gate on WebView/Headless UA behave like a
 /// normal desktop Chrome.
-pub const CHROME_USER_AGENT: &str =
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+pub const CHROME_USER_AGENT: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
 #[derive(Default)]
 pub struct PersonaState {
@@ -35,7 +34,9 @@ fn persona_label(persona_id: &str) -> String {
 fn is_valid_persona_id(id: &str) -> bool {
     !id.is_empty()
         && id.len() <= 128
-        && id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+        && id
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
 }
 
 /// Pure LRU plan: which labels to close so the open count fits `cap`
@@ -49,7 +50,10 @@ fn evict_plan(order: &[String], current: &str, cap: u32) -> Vec<String> {
     if others.len() <= allowed {
         return Vec::new();
     }
-    others[..others.len() - allowed].iter().map(|l| (*l).clone()).collect()
+    others[..others.len() - allowed]
+        .iter()
+        .map(|l| (*l).clone())
+        .collect()
 }
 
 #[tauri::command]

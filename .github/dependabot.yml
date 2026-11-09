@@ -30,6 +30,11 @@ updates:
           - "*"
         update-types:
           - major
+    ignore:
+      # svelte-check peer range (^5 || ^6) rejects TS 7 — revisit when peers catch up
+      - dependency-name: "typescript"
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: cargo
     directory: "/src-tauri"

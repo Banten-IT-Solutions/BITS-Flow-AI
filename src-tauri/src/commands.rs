@@ -157,13 +157,38 @@ fn default_providers() -> Vec<Provider> {
         }
     }
     vec![
-        provider("flow", "Flow", "https://labs.google/fx/tools/flow", Category::Both),
-        provider("gemini", "Gemini", "https://gemini.google.com", Category::Image),
+        provider(
+            "flow",
+            "Flow",
+            "https://labs.google/fx/tools/flow",
+            Category::Both,
+        ),
+        provider(
+            "gemini",
+            "Gemini",
+            "https://gemini.google.com",
+            Category::Image,
+        ),
         provider("suno", "Suno", "https://suno.com", Category::Both),
-        provider("pixverse", "PixVerse", "https://app.pixverse.ai", Category::Video),
-        provider("leonardo", "Leonardo", "https://app.leonardo.ai", Category::Image),
+        provider(
+            "pixverse",
+            "PixVerse",
+            "https://app.pixverse.ai",
+            Category::Video,
+        ),
+        provider(
+            "leonardo",
+            "Leonardo",
+            "https://app.leonardo.ai",
+            Category::Image,
+        ),
         provider("krea", "Krea", "https://www.krea.ai", Category::Image),
-        provider("imagineart", "ImagineArt", "https://imagine.art", Category::Both),
+        provider(
+            "imagineart",
+            "ImagineArt",
+            "https://imagine.art",
+            Category::Both,
+        ),
     ]
 }
 
