@@ -95,5 +95,7 @@
   "errorCommandFailed": "Perintah gagal: {message}",
   "errorsCloseFirst": "Tutup jendela persona ini terlebih dahulu, lalu hapus datanya.",
   "errorNoDataDir": "Tidak ada data untuk persona ini.",
-  "errorsLoadFailed": "Gagal memuat data. Coba mulai ulang aplikasi."
+  "errorsLoadFailed": "Gagal memuat data. Coba mulai ulang aplikasi.",
+  "updateAvailable": "Versi {version} tersedia",
+  "updateAction": "Perbarui"
 }

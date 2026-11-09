@@ -95,5 +95,7 @@
   "errorCommandFailed": "Command failed: {message}",
   "errorsCloseFirst": "Close this persona's window first, then clear its data.",
   "errorNoDataDir": "No data found for this persona.",
-  "errorsLoadFailed": "Could not load your data. Try restarting the app."
+  "errorsLoadFailed": "Could not load your data. Try restarting the app.",
+  "updateAvailable": "Version {version} is available",
+  "updateAction": "Update"
 }

@@ -99,6 +99,22 @@ impl Settings {
     }
 }
 
+/// Open the GitHub releases page in the user's default browser. The URL is
+/// fixed here (never passed from the webview) so the command cannot be
+/// abused to open arbitrary targets.
+#[tauri::command]
+pub fn open_release_page() -> Result<(), String> {
+    const RELEASES_URL: &str =
+        "https://github.com/Banten-IT-Solutions/BITS-Flow-AI/releases/latest";
+    let mut child = std::process::Command::new("xdg-open")
+        .arg(RELEASES_URL)
+        .spawn()
+        .map_err(|e| e.to_string())?;
+    // xdg-open hands off to the desktop portal and exits immediately; wait so
+    // the quick exit does not leave a zombie process behind.
+    child.wait().map(|_| ()).map_err(|e| e.to_string())
+}
+
 pub fn app_data_dir(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = app.path().app_local_data_dir().map_err(|e| e.to_string())?;
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;

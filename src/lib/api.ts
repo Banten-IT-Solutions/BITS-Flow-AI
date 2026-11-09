@@ -122,3 +122,8 @@ export function isValidProviderUrl(url: string): boolean {
     return false;
   }
 }
+
+/** Open the GitHub releases page in the user's default browser. */
+export function openReleasePage() {
+  return invoke("open_release_page");
+}

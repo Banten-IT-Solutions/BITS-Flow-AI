@@ -49,6 +49,7 @@ pub fn run() {
             commands::list_recent,
             commands::clear_persona_data,
             commands::clear_all_persona_data,
+            commands::open_release_page,
             persona::open_persona,
             persona::list_open_personas,
         ])

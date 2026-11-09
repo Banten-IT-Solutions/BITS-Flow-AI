@@ -1,5 +1,6 @@
 <script lang="ts">
   import {
+    ArrowUpCircle,
     BookMarked,
     Globe,
     House,
@@ -12,9 +13,11 @@
   import { listen } from "@tauri-apps/api/event";
   import { commandError } from "./lib/errors";
   import { lastUsedProvider, launchPersona, refreshOpenPersonas } from "./lib/launch";
+  import { openReleasePage } from "./lib/api";
   import { m } from "./lib/paraglide/messages";
   import { setLocale } from "./lib/paraglide/runtime";
   import { toast } from "./lib/toast";
+  import { checkForUpdate } from "./lib/updates";
   import { activeMenu, accounts, loadAll, providers, recent, uiLocale } from "./lib/stores";
   import type { Account, MenuId } from "./lib/types";
   import logo from "./assets/logo.png";
@@ -28,7 +31,6 @@
   import Toaster from "./lib/ui/Toaster.svelte";
 
   type MenuEntry = { id: MenuId; icon: typeof House };
-
   const menus: MenuEntry[] = [
     { id: "home", icon: House },
     { id: "accounts", icon: Users },
@@ -47,10 +49,14 @@
     settings: m.menuSettings,
   };
 
+  /** Tag of the newest GitHub release when it is newer than this build, else null. */
+  let updateVersion = $state<string | null>(null);
+
   onMount(() => {
     loadAll()
       .then(() => setLocale(get(uiLocale), { reload: false }))
       .catch((e) => console.error("init failed", e));
+    void checkForUpdate(pkg.version).then((tag) => (updateVersion = tag));
     void refreshOpenPersonas();
     // Persona windows can be closed outside this view; Rust emits this event
     // so the Home badge stays accurate.
@@ -131,8 +137,24 @@
       {/key}
     </ul>
 
-    <div class="mt-auto flex items-center border-t border-line px-4 py-3">
-      <span class="text-xs font-medium text-muted" title="BITS Flow AI">v{pkg.version}</span>
+    <div class="mt-auto flex items-center justify-between gap-2 border-t border-line px-4 py-3">
+      <span class="truncate text-xs font-medium text-muted" title="BITS Flow AI">
+        BITS Flow AI - {pkg.version}
+      </span>
+      {#if updateVersion}
+        <button
+          type="button"
+          class="badge shrink-0 cursor-pointer transition-opacity duration-150 hover:opacity-90"
+          title={m.updateAvailable({ version: updateVersion })}
+          onclick={() =>
+            openReleasePage().catch((e) => {
+              toast(commandError(e));
+            })}
+        >
+          <ArrowUpCircle class="size-3" />
+          {m.updateAction()}
+        </button>
+      {/if}
     </div>
   </nav>
 
