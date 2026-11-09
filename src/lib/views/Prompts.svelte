@@ -7,7 +7,7 @@
   import { categoryLabel } from "../settings";
   import { prompts } from "../stores";
   import { toast } from "../toast";
-  import type { Prompt } from "../types";
+  import type { Category, Prompt } from "../types";
   import { get } from "svelte/store";
   import ConfirmDelete from "../ui/ConfirmDelete.svelte";
   import EmptyState from "../ui/EmptyState.svelte";
@@ -15,6 +15,7 @@
   import PromptDialog from "../ui/PromptDialog.svelte";
 
   let query = $state("");
+  let filter = $state<"all" | Category>("all");
   let dialogPrompt = $state<Prompt | null>(null);
   let dialogOpen = $state(false);
   let confirmTarget = $state<Prompt | null>(null);
@@ -27,13 +28,20 @@
     both: m.categoryBoth(),
   });
 
+  const filters: { id: "all" | Category; label: () => string }[] = [
+    { id: "all", label: () => m.providersFilterAll() },
+    { id: "image", label: () => catLabels.image },
+    { id: "video", label: () => catLabels.video },
+    { id: "both", label: () => catLabels.both },
+  ];
+
   const sorted = $derived.by(() => {
     const q = query.trim().toLowerCase();
-    const base = q
-      ? $prompts.filter(
-          (p) => p.title.toLowerCase().includes(q) || p.body.toLowerCase().includes(q),
-        )
-      : $prompts;
+    const base = $prompts.filter(
+      (p) =>
+        (filter === "all" || p.category === filter) &&
+        (!q || p.title.toLowerCase().includes(q) || p.body.toLowerCase().includes(q)),
+    );
     // Pinned first, insertion order preserved within each group.
     return [...base].sort((a, b) => Number(b.pinned) - Number(a.pinned));
   });
@@ -113,6 +121,21 @@
         {m.commonAdd()}
       </button>
     </div>
+  </div>
+
+  <div class="flex w-fit gap-1.5">
+    {#each filters as f (f.id)}
+      <button
+        type="button"
+        class="h-7 rounded-md border px-2.5 text-xs transition-colors duration-150 {filter === f.id
+          ? "border-accent bg-accent font-medium text-accent-fg"
+          : "border-line bg-surface text-muted hover:bg-bg hover:text-fg"}"
+        aria-pressed={filter === f.id}
+        onclick={() => (filter = f.id)}
+      >
+        {f.label()}
+      </button>
+    {/each}
   </div>
 
   {#if $prompts.length === 0}
