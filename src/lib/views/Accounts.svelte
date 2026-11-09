@@ -10,7 +10,9 @@
   import { get } from "svelte/store";
   import AccountDialog from "../ui/AccountDialog.svelte";
   import ConfirmDelete from "../ui/ConfirmDelete.svelte";
+  import EmptyState from "../ui/EmptyState.svelte";
   import Menu from "../ui/Menu.svelte";
+  import { Search, Users } from "@lucide/svelte";
 
   let query = $state("");
   let dialogAccount = $state<Account | null>(null);
@@ -94,8 +96,7 @@
   </div>
 
   {#if $accounts.length === 0}
-    <div class="card flex items-center justify-between gap-3">
-      <p class="view-desc">{m.accountsEmpty()}</p>
+    <EmptyState icon={Users} message={m.accountsEmpty()}>
       <button
         class="btn-primary"
         onclick={() => {
@@ -106,9 +107,11 @@
         <Plus class="size-4" />
         {m.commonAdd()}
       </button>
-    </div>
+    </EmptyState>
   {:else if filtered.length === 0}
-    <p class="view-desc">{m.commonNoResults()}</p>
+    <EmptyState icon={Search} message={m.commonNoResults()}>
+      <button class="btn" onclick={() => (query = "")}>{m.commonCancel()}</button>
+    </EmptyState>
   {:else}
     <ul class="space-y-1.5">
       {#each filtered as account (account.id)}

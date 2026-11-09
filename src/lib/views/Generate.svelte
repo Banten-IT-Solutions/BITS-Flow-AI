@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Play } from "@lucide/svelte";
+  import { Play, Sparkles } from "@lucide/svelte";
   import { commandError } from "../errors";
   import { launchPersona } from "../launch";
   import { m } from "../paraglide/messages";
@@ -7,7 +7,8 @@
   import { filterProviders } from "../settings";
   import { accounts, prompts, providers } from "../stores";
   import { toast } from "../toast";
-import Select from "../ui/Select.svelte";
+  import EmptyState from "../ui/EmptyState.svelte";
+  import Select from "../ui/Select.svelte";
 
   let tab = $state<"image" | "video">("image");
   let selectedProviderId = $state("");
@@ -79,7 +80,7 @@ import Select from "../ui/Select.svelte";
   </div>
 
   {#if visible.length === 0}
-    <p class="view-desc">{m.generateEmpty()}</p>
+    <EmptyState icon={Sparkles} message={m.generateEmpty()} />
   {:else}
     <ul class="space-y-1.5">
       {#each visible as provider (provider.id)}

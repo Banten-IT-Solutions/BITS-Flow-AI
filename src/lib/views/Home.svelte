@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Clapperboard, Globe, Image as ImageIcon, Layers, Play } from "@lucide/svelte";
+  import { Clapperboard, Clock, Globe, Image as ImageIcon, Layers, Play } from "@lucide/svelte";
   import { clearPersonaData, saveAccounts } from "../api";
   import { commandError } from "../errors";
   import { lastUsedProvider, launchPersona, refreshOpenPersonas } from "../launch";
@@ -11,6 +11,7 @@
   import AccountDialog from "../ui/AccountDialog.svelte";
 
   import ConfirmDelete from "../ui/ConfirmDelete.svelte";
+  import EmptyState from "../ui/EmptyState.svelte";
   import Menu, { type MenuItem } from "../ui/Menu.svelte";
   import Select from "../ui/Select.svelte";
 
@@ -228,7 +229,7 @@
   <section class="space-y-2">
     <h2 class="section-title">{m.homeRecent()}</h2>
     {#if $recent.length === 0}
-      <p class="view-desc">{m.homeRecentEmpty()}</p>
+      <EmptyState icon={Clock} message={m.homeRecentEmpty()} />
     {:else}
       <ul class="space-y-1.5">
         {#each $recent.slice(0, 8) as entry (`${entry.ts}-${entry.personaId}`)}

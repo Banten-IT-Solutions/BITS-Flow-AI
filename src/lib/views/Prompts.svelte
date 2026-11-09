@@ -10,6 +10,7 @@
   import type { Prompt } from "../types";
   import { get } from "svelte/store";
   import ConfirmDelete from "../ui/ConfirmDelete.svelte";
+  import EmptyState from "../ui/EmptyState.svelte";
   import Menu from "../ui/Menu.svelte";
   import PromptDialog from "../ui/PromptDialog.svelte";
 
@@ -115,9 +116,7 @@
   </div>
 
   {#if $prompts.length === 0}
-    <div class="card flex flex-col items-center gap-3 py-14 text-center">
-      <NotebookText class="size-8 text-muted" aria-hidden="true" />
-      <p class="text-sm text-muted">{m.promptsEmpty()}</p>
+    <EmptyState icon={NotebookText} message={m.promptsEmpty()}>
       <button
         class="btn-primary"
         onclick={() => {
@@ -128,13 +127,11 @@
         <Plus class="size-4" />
         {m.commonAdd()}
       </button>
-    </div>
+    </EmptyState>
   {:else if sorted.length === 0}
-    <div class="card flex flex-col items-center gap-3 py-14 text-center">
-      <Search class="size-8 text-muted" aria-hidden="true" />
-      <p class="text-sm text-muted">{m.commonNoResults()}</p>
+    <EmptyState icon={Search} message={m.commonNoResults()}>
       <button class="btn" onclick={() => (query = "")}>{m.commonCancel()}</button>
-    </div>
+    </EmptyState>
   {:else}
     <ul class="space-y-1.5">
       {#each sorted as prompt (prompt.id)}

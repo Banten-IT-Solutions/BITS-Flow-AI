@@ -9,8 +9,10 @@
   import type { Category, Provider } from "../types";
   import { get } from "svelte/store";
   import ConfirmDelete from "../ui/ConfirmDelete.svelte";
+  import EmptyState from "../ui/EmptyState.svelte";
   import Menu from "../ui/Menu.svelte";
   import ProviderDialog from "../ui/ProviderDialog.svelte";
+  import { Globe, Search } from "@lucide/svelte";
 
   type Filter = "all" | Category;
 
@@ -124,9 +126,22 @@
   </div>
 
   {#if $providers.length === 0}
-    <p class="view-desc">{m.providersEmpty()}</p>
+    <EmptyState icon={Globe} message={m.providersEmpty()}>
+      <button
+        class="btn-primary"
+        onclick={() => {
+          dialogProvider = null;
+          dialogOpen = true;
+        }}
+      >
+        <Plus class="size-4" />
+        {m.commonAdd()}
+      </button>
+    </EmptyState>
   {:else if filtered.length === 0}
-    <p class="view-desc">{m.commonNoResults()}</p>
+    <EmptyState icon={Search} message={m.commonNoResults()}>
+      <button class="btn" onclick={() => (query = "")}>{m.commonCancel()}</button>
+    </EmptyState>
   {:else}
     <ul class="space-y-1.5">
       {#each filtered as provider (provider.id)}
