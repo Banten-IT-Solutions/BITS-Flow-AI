@@ -20,6 +20,17 @@
   let saving = $state(false);
   let error = $state("");
 
+  /** Grow the textarea with its content; CSS max-height takes over after the cap. */
+  function autogrow(node: HTMLTextAreaElement) {
+    const fit = () => {
+      node.style.height = "auto";
+      node.style.height = `${node.scrollHeight}px`;
+    };
+    node.addEventListener("input", fit);
+    fit();
+    return { destroy: () => node.removeEventListener("input", fit) };
+  }
+
   const catLabels = $derived({
     image: m.categoryImage(),
     video: m.categoryVideo(),
@@ -101,7 +112,11 @@
     </div>
     <label class="flex flex-col gap-1.5">
       <span class="text-sm font-medium">{m.commonBody()}</span>
-      <textarea class="input min-h-36 resize-y py-2 font-mono" bind:value={body} required
+      <textarea
+        class="input max-h-64 min-h-36 overflow-y-auto py-2 font-mono"
+        bind:value={body}
+        use:autogrow
+        required
       ></textarea>
     </label>
     {#if error}<p class="error-text">{error}</p>{/if}
