@@ -37,6 +37,7 @@
     "@tailwindcss/vite": "^4.1.0",
     "@tauri-apps/cli": "^2",
     "@types/node": "^26.6.6",
+    "puppeteer-core": "^25.16.0",
     "semantic-release": "^25.0.0",
     "svelte": "^5.56.3",
     "svelte-check": "^4.6.0",

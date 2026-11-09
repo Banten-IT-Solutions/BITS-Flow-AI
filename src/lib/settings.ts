@@ -1,11 +1,11 @@
 import type { Category, LanguageSetting, Provider } from "./types";
 
-/** Resolve a settings value against the host preference. Default locale is `id`. */
-export function resolveLocale(setting: LanguageSetting, systemLocale: string): "id" | "en" {
-  if (setting === "system") {
-    return systemLocale.toLowerCase().startsWith("id") ? "id" : "en";
-  }
-  return setting;
+/** Options for the language setting: Indonesia plus English as default. */
+export function languageOptions(): { value: LanguageSetting; label: string }[] {
+  return [
+    { value: "id", label: "Bahasa Indonesia" },
+    { value: "en", label: "English (Default)" },
+  ];
 }
 
 export function categoryLabel(

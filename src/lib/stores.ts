@@ -1,7 +1,6 @@
 import { get, writable } from "svelte/store";
 import { getSettings, listAccounts, listPrompts, listProviders, listRecent } from "./api";
 import { m } from "./paraglide/messages";
-import { resolveLocale } from "./settings";
 import { toast } from "./toast";
 import {
   type Account,
@@ -51,8 +50,6 @@ export async function loadAll(): Promise<void> {
   uiLocale.set(applyLocale());
 }
 
-export function applyLocale() {
-  const { language } = get(settings);
-  const systemLocale = typeof navigator !== "undefined" ? navigator.language : "id";
-  return resolveLocale(language, systemLocale);
+export function applyLocale(): "id" | "en" {
+  return get(settings).language;
 }

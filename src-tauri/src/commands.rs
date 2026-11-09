@@ -62,7 +62,6 @@ pub struct Prompt {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum LanguageSetting {
-    System,
     Id,
     En,
 }
@@ -85,7 +84,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            language: LanguageSetting::System,
+            language: LanguageSetting::En,
             close_behavior: CloseBehavior::Exit,
             lru_size: 3,
         }
@@ -601,6 +600,11 @@ mod tests {
     #[test]
     fn empty_input_stays_empty() {
         assert!(cap_recent(Vec::new()).is_empty());
+    }
+
+    #[test]
+    fn defaults_to_english() {
+        assert_eq!(Settings::default().language, LanguageSetting::En);
     }
 
     #[test]

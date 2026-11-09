@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { filterProviders, resolveLocale } from "./settings";
+import { filterProviders, languageOptions } from "./settings";
 import type { Provider } from "./types";
 
 const providers: Provider[] = [
@@ -29,16 +29,12 @@ const providers: Provider[] = [
   },
 ];
 
-describe("resolveLocale", () => {
-  it("follows the system locale and defaults to id", () => {
-    expect(resolveLocale("system", "id-ID")).toBe("id");
-    expect(resolveLocale("system", "en-US")).toBe("en");
-    expect(resolveLocale("system", "ja-JP")).toBe("en");
-  });
-
-  it("uses the explicit override", () => {
-    expect(resolveLocale("en", "id-ID")).toBe("en");
-    expect(resolveLocale("id", "en-US")).toBe("id");
+describe("languageOptions", () => {
+  it("offers exactly Indonesia and English as default", () => {
+    expect(languageOptions()).toEqual([
+      { value: "id", label: "Bahasa Indonesia" },
+      { value: "en", label: "English (Default)" },
+    ]);
   });
 });
 

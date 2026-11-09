@@ -14,6 +14,7 @@
   import { commandError } from "../errors";
   import { m } from "../paraglide/messages";
   import { setLocale } from "../paraglide/runtime";
+  import { languageOptions } from "../settings";
   import { accounts, prompts, applyLocale, settings, uiLocale } from "../stores";
   import { toast } from "../toast";
   import type { Settings } from "../types";
@@ -179,11 +180,7 @@
         <Select
           ariaLabel={m.settingsLanguage()}
           value={$settings.language}
-          options={[
-            { value: "system", label: m.settingsSystem() },
-            { value: "id", label: "Bahasa Indonesia" },
-            { value: "en", label: "English" },
-          ]}
+          options={languageOptions()}
           onchange={(v) => void patch({ language: v as Settings["language"] })}
         />
       </label>

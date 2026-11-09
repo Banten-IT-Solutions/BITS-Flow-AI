@@ -71,7 +71,6 @@
   "settingsTitle": "Settings",
   "settingsDescription": "Manage language, window behavior, backups, and your persona data.",
   "settingsLanguage": "Language",
-  "settingsSystem": "Follow system",
   "settingsCloseBehavior": "Close button behavior",
   "settingsCloseExit": "Exit the app",
   "settingsCloseHide": "Hide to background",

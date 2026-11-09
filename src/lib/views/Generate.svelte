@@ -87,7 +87,8 @@
           <Select
             compact
             ariaLabel={`${m.menuAccounts()} — ${provider.name}`}
-            bind:value={accountByProvider[provider.id]}
+            value={accountByProvider[provider.id] ?? ""}
+            onchange={(v) => (accountByProvider[provider.id] = v)}
             options={[
               { value: "", label: m.commonNone(), disabled: true },
               ...$accounts.map((a) => ({ value: a.id, label: a.name })),
@@ -97,7 +98,8 @@
             <Select
               compact
               ariaLabel={`${m.menuPrompts()} — ${provider.name}`}
-              bind:value={promptByProvider[provider.id]}
+              value={promptByProvider[provider.id] ?? ""}
+              onchange={(v) => (promptByProvider[provider.id] = v)}
               options={[
                 { value: "", label: m.commonNone() },
                 ...sortedPrompts.map((p) => ({ value: p.id, label: p.title })),

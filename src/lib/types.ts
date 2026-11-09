@@ -2,7 +2,7 @@
 
 export type Category = "image" | "video" | "both";
 export type Engine = "webview" | "chrome";
-export type LanguageSetting = "system" | "id" | "en";
+export type LanguageSetting = "id" | "en";
 export type CloseBehavior = "exit" | "hide";
 
 export interface Account {
@@ -46,7 +46,7 @@ export interface RecentEntry {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  language: "system",
+  language: "en",
   closeBehavior: "exit",
   lruSize: 3,
 };
