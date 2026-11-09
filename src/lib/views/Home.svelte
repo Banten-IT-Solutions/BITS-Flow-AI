@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Clapperboard, Clock, Globe, Image as ImageIcon, Layers, Play, Plus, Users } from "@lucide/svelte";
+  import { Clapperboard, Clock, Globe, Image as ImageIcon, Layers, Plus, Users } from "@lucide/svelte";
   import { clearPersonaData, saveAccounts } from "../api";
   import { commandError } from "../errors";
-  import { lastUsedProvider, launchPersona, refreshOpenPersonas } from "./../launch";
+  import { lastUsedProvider, launchPersona, refreshOpenPersonas } from "../launch";
   import { m } from "../paraglide/messages";
   import { accounts, activeMenu, openLabels, providers, recent, uiLocale } from "../stores";
   import { toast } from "../toast";
@@ -13,10 +13,7 @@
   import ConfirmDelete from "../ui/ConfirmDelete.svelte";
   import EmptyState from "../ui/EmptyState.svelte";
   import Menu, { type MenuItem } from "../ui/Menu.svelte";
-  import Select from "../ui/Select.svelte";
 
-  let selectedProvider = $state("");
-  let selectedAccount = $state("");
   let launching = $state(false);
 
   let editAccount = $state<Account | null>(null);
@@ -139,59 +136,13 @@
       toast(commandError(e));
     }
   }
-
-  function onkeydown(e: KeyboardEvent) {
-    if (e.ctrlKey && !e.altKey && e.key === "Enter") {
-      e.preventDefault();
-      void launch(selectedProvider, selectedAccount);
-    }
-  }
 </script>
-
-<svelte:window onkeydown={onkeydown} />
 
 <div class="view">
   <div class="space-y-1">
     <h1 class="view-title">{m.homeTitle()}</h1>
     <p class="view-desc">{m.homeDescription()}</p>
   </div>
-
-  <section class="card space-y-3">
-    <h2 class="section-title">{m.homeQuickLaunch()}</h2>
-    <p class="view-desc">{m.homeQuickLaunchHint()}</p>
-    <div class="flex flex-wrap items-end gap-3">
-      <label class="flex w-60 flex-col gap-1">
-        <span class="text-sm font-medium">{m.menuProviders()}</span>
-        <Select
-          ariaLabel={m.menuProviders()}
-          bind:value={selectedProvider}
-          options={[
-            { value: "", label: m.commonNone(), disabled: true },
-            ...$providers.map((p) => ({ value: p.id, label: p.name })),
-          ]}
-        />
-      </label>
-      <label class="flex w-60 flex-col gap-1">
-        <span class="text-sm font-medium">{m.menuAccounts()}</span>
-        <Select
-          ariaLabel={m.menuAccounts()}
-          bind:value={selectedAccount}
-          options={[
-            { value: "", label: m.commonNone(), disabled: true },
-            ...$accounts.map((a) => ({ value: a.id, label: a.name })),
-          ]}
-        />
-      </label>
-      <button
-        class="btn-primary h-10 px-6"
-        disabled={!selectedProvider || !selectedAccount || launching}
-        onclick={() => void launch(selectedProvider, selectedAccount)}
-      >
-        <Play class="size-4" />
-        {m.commonLaunch()}
-      </button>
-    </div>
-  </section>
 
   <section class="space-y-2">
     <h2 class="section-title">{m.homePersonas()}</h2>
@@ -246,12 +197,19 @@
       <ul class="space-y-1.5">
         {#each $recent.slice(0, 8) as entry (`${entry.ts}-${entry.personaId}`)}
           {@const Icon = categoryIcon(entry.providerId)}
-          <li class="row py-1.5">
-            <Icon class="size-4 shrink-0 text-muted" />
-            <span class="min-w-0 flex-1 truncate text-sm">
-              {m.homeRecentItem({ persona: entry.personaName, provider: entry.providerName })}
-            </span>
-            <span class="shrink-0 text-xs text-muted">{formatRelative(entry.ts, $uiLocale)}</span>
+          <li>
+            <button
+              type="button"
+              class="row w-full py-1.5 text-left transition-colors duration-150 hover:bg-bg"
+              title={m.homeRecentReplay()}
+              onclick={() => void launch(entry.providerId, entry.personaId)}
+            >
+              <Icon class="size-4 shrink-0 text-muted" />
+              <span class="min-w-0 flex-1 truncate text-sm">
+                {m.homeRecentItem({ persona: entry.personaName, provider: entry.providerName })}
+              </span>
+              <span class="shrink-0 text-xs text-muted">{formatRelative(entry.ts, $uiLocale)}</span>
+            </button>
           </li>
         {/each}
       </ul>
