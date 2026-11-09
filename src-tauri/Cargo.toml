@@ -23,6 +23,11 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 ureq = "2"
 
+# GTK layout fix for persona child webviews (Window::default_vbox packing).
+# Must match the gtk version tauri/wry already links (0.18.x).
+[target.'cfg(target_os = "linux")'.dependencies]
+gtk = "0.18"
+
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
 [profile.release]
 codegen-units = 1

@@ -13,13 +13,12 @@ use serde::Serialize;
 use tauri::window::WindowBuilder;
 use tauri::{
     AppHandle, LogicalPosition, LogicalSize, Manager, State, WebviewBuilder, WebviewUrl, Window,
-    WindowEvent,
 };
 
 use crate::commands;
 
-/// Toolbar strip height in logical pixels — one micro row.
-const BAR_HEIGHT: f64 = 10.0;
+/// Toolbar strip height in logical pixels — one standard toolbar row.
+const BAR_HEIGHT: f64 = 36.0;
 
 /// Chrome UA so providers that gate on WebView/Headless UA behave like a
 /// normal desktop Chrome.
@@ -51,34 +50,34 @@ pub(crate) fn is_valid_persona_id(id: &str) -> bool {
             .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
 }
 
-/// Logical window size; falls back to 800x600 before the first layout event.
-fn logical_size(window: &Window) -> (f64, f64) {
-    let Ok(size) = window.inner_size() else {
-        return (800.0, 600.0);
-    };
-    let scale = window.scale_factor().unwrap_or(1.0).max(1.0);
-    let w = size.width as f64 / scale;
-    let h = size.height as f64 / scale;
-    (w.max(100.0), h.max(100.0))
-}
+/// Pin the GTK layout of a persona window. tauri's `add_child` on Linux
+/// packs child webviews into the window's vertical `GtkBox` with
+/// `expand=true`, ignoring the bounds passed to `add_child` (wry only
+/// honours bounds inside a `GtkFixed`). So instead of sizing webviews
+/// manually, pin the bar's height and let the page expand into the rest —
+/// GTK then re-lays out on every window resize for free.
+#[cfg(target_os = "linux")]
+fn pin_gtk_layout(window: &Window, bar_height: f64) {
+    use gtk::prelude::*;
 
-/// Position toolbar above page for the current window size.
-fn relayout(window: &Window) {
-    let (w, h) = logical_size(window);
-    let label = window.label();
-    let Some(bar) = window.get_webview(&format!("{label}-bar")) else {
-        return;
-    };
-    let Some(page) = window.get_webview(&format!("{label}-page")) else {
-        return;
-    };
-    let _ = bar.set_bounds(tauri::Rect {
-        position: LogicalPosition::new(0.0, 0.0).into(),
-        size: LogicalSize::new(w, BAR_HEIGHT).into(),
-    });
-    let _ = page.set_bounds(tauri::Rect {
-        position: LogicalPosition::new(0.0, BAR_HEIGHT).into(),
-        size: LogicalSize::new(w, h - BAR_HEIGHT).into(),
+    let win = window.clone();
+    // GTK calls are main-thread only; add_child already finished there, so
+    // both child webviews exist by the time this closure runs.
+    let _ = window.run_on_main_thread(move || {
+        let Ok(vbox) = win.default_vbox() else {
+            return;
+        };
+        let children = vbox.children();
+        let count = children.len();
+        if count < 2 {
+            return;
+        }
+        let bar = &children[count - 2];
+        let page = &children[count - 1];
+        bar.set_size_request(-1, bar_height as i32);
+        vbox.set_child_packing(bar, false, true, 0, gtk::PackType::Start);
+        vbox.set_child_packing(page, true, true, 0, gtk::PackType::Start);
+        vbox.queue_resize();
     });
 }
 
@@ -142,10 +141,10 @@ pub fn open_persona(
                 .join(&persona_id);
             let window = WindowBuilder::new(&app, &label)
                 .title(&persona_id)
+                .inner_size(1120.0, 760.0)
                 .visible(false)
                 .build()
                 .map_err(|e| e.to_string())?;
-            let (w, h) = logical_size(&window);
             window
                 .add_child(
                     WebviewBuilder::new(
@@ -154,7 +153,7 @@ pub fn open_persona(
                     )
                     .initialization_script(format!("window.__PERSONA_ID__ = {persona_id:?};")),
                     LogicalPosition::new(0.0, 0.0),
-                    LogicalSize::new(w, BAR_HEIGHT),
+                    LogicalSize::new(1120.0, BAR_HEIGHT),
                 )
                 .map_err(|e| e.to_string())?;
             let mut page = WebviewBuilder::new(
@@ -169,15 +168,13 @@ pub fn open_persona(
                 .add_child(
                     page,
                     LogicalPosition::new(0.0, BAR_HEIGHT),
-                    LogicalSize::new(w, (h - BAR_HEIGHT).max(100.0)),
+                    LogicalSize::new(1120.0, 760.0 - BAR_HEIGHT),
                 )
                 .map_err(|e| e.to_string())?;
-            let win = window.clone();
-            window.on_window_event(move |event| {
-                if matches!(event, WindowEvent::Resized(_)) {
-                    relayout(&win);
-                }
-            });
+            // tauri packs both children into a plain GtkBox (expand=true), so
+            // the bounds above are ignored on Linux. Pin the real layout.
+            #[cfg(target_os = "linux")]
+            pin_gtk_layout(&window, BAR_HEIGHT);
             window.show().map_err(|e| e.to_string())?;
             window.set_focus().map_err(|e| e.to_string())?;
             state
