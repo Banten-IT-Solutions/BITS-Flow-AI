@@ -258,29 +258,8 @@ pub fn list_providers(app: AppHandle) -> Result<Vec<Provider>, String> {
         write_json(&path, &seeded)?;
         return Ok(seeded);
     }
-    let mut saved: Vec<Provider> = read_json(&path)?;
-    sync_builtins(&mut saved);
+    let saved: Vec<Provider> = read_json(&path)?;
     Ok(saved)
-}
-
-/// Built-in providers are app-owned (name/URL locked in the UI), so every
-/// load refreshes their URLs to the current defaults — upstream moves such
-/// as Flow migrating to flow.google.com reach existing installs — and
-/// appends builtins missing from older saves. Builtin providers that no
-/// longer ship are removed on the same pass. Custom providers are never
-/// touched.
-fn sync_builtins(saved: &mut Vec<Provider>) {
-    let defaults = default_providers();
-    // Builtin set is app-owned: dropped builtins disappear too, while custom
-    // providers (and builtins the user re-added as custom) are kept.
-    saved.retain(|p| p.custom || defaults.iter().any(|d| d.id == p.id));
-    for default in defaults {
-        match saved.iter_mut().find(|p| p.id == default.id) {
-            Some(provider) if !provider.custom => provider.url = default.url,
-            None => saved.push(default),
-            _ => {}
-        }
-    }
 }
 
 fn validate_provider(provider: &Provider) -> Result<(), String> {
@@ -519,60 +498,6 @@ mod tests {
         assert_eq!(settings.language, LanguageSetting::En);
         assert_eq!(settings.close_behavior, CloseBehavior::Hide);
         assert_eq!(settings.lru_size, 5);
-    }
-
-    #[test]
-    fn builtin_sync_refreshes_locked_urls_and_appends_missing() {
-        let mut saved = vec![provider(
-            "flow",
-            "Flow",
-            "https://labs.google/fx/tools/flow",
-            Category::Both,
-        )];
-        sync_builtins(&mut saved);
-        assert_eq!(
-            saved.iter().find(|p| p.id == "flow").unwrap().url,
-            "https://flow.google.com"
-        );
-        assert!(saved.iter().any(|p| p.id == "gemini"));
-    }
-
-    #[test]
-    fn builtin_sync_leaves_custom_providers_alone() {
-        let mut saved = vec![provider(
-            "flow",
-            "Flow saya",
-            "https://example.com",
-            Category::Both,
-        )];
-        saved[0].custom = true;
-        sync_builtins(&mut saved);
-        assert_eq!(saved[0].url, "https://example.com");
-        assert_eq!(saved[0].name, "Flow saya");
-        assert!(saved.iter().any(|p| p.id == "gemini"));
-    }
-
-    #[test]
-    fn builtin_sync_drops_removed_builtins_but_keeps_custom_ones() {
-        let mut saved = default_providers();
-        saved.retain(|p| p.id != "chatgpt");
-        sync_builtins(&mut saved);
-        assert!(saved.iter().any(|p| p.id == "chatgpt"));
-
-        let mut retired = vec![provider("suno", "Suno", "https://suno.com", Category::Both)];
-        sync_builtins(&mut retired);
-        assert!(!retired.iter().any(|p| p.id == "suno"));
-        assert!(retired.iter().any(|p| p.id == "gemini"));
-
-        let mut custom_suno = vec![provider(
-            "suno",
-            "Suno saya",
-            "https://example.com",
-            Category::Both,
-        )];
-        custom_suno[0].custom = true;
-        sync_builtins(&mut custom_suno);
-        assert!(custom_suno.iter().any(|p| p.id == "suno" && p.custom));
     }
 
     #[test]
