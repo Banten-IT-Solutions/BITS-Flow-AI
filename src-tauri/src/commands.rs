@@ -175,16 +175,23 @@ pub fn install_deb_update(url: String) -> Result<(), String> {
             file.write_all(&buffer[..read]).map_err(|e| e.to_string())?;
         }
         drop(file);
-        let status = std::process::Command::new("pkexec")
+        let output = std::process::Command::new("pkexec")
             .arg("dpkg")
             .arg("-i")
             .arg(&path)
-            .status()
+            .output()
             .map_err(|e| e.to_string())?;
-        if status.success() {
+        if output.status.success() {
             Ok(())
         } else {
-            Err("dpkg install failed".into())
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            // pkexec exits 126 when the polkit dialog is dismissed or no
+            // session agent can prompt; dpkg failures carry dpkg's stderr.
+            if output.status.code() == Some(126) || stderr.contains("Not authorized") {
+                Err("update not authorized (polkit dialog dismissed or no session agent)".into())
+            } else {
+                Err(format!("dpkg install failed: {}", stderr.trim()))
+            }
         }
     })();
     if let Some(path) = temp_path {
