@@ -206,36 +206,12 @@ fn default_providers() -> Vec<Provider> {
             Category::Image,
         ),
         provider(
-            "pixverse",
-            "PixVerse",
-            "https://app.pixverse.ai",
-            Category::Video,
-        ),
-        provider(
             "leonardo",
             "Leonardo",
             "https://app.leonardo.ai",
             Category::Image,
         ),
         provider("krea", "Krea", "https://www.krea.ai", Category::Image),
-        provider(
-            "imagineart",
-            "ImagineArt",
-            "https://www.imagine.art",
-            Category::Both,
-        ),
-        provider(
-            "dreamina",
-            "Dreamina",
-            "https://dreamina.capcut.com",
-            Category::Both,
-        ),
-        provider(
-            "bing",
-            "Bing Image Creator",
-            "https://www.bing.com/images/create/ai-image-generator",
-            Category::Image,
-        ),
         provider(
             "firefly",
             "Adobe Firefly",
@@ -579,9 +555,9 @@ mod tests {
     #[test]
     fn builtin_sync_drops_removed_builtins_but_keeps_custom_ones() {
         let mut saved = default_providers();
-        saved.retain(|p| p.id != "dreamina");
+        saved.retain(|p| p.id != "chatgpt");
         sync_builtins(&mut saved);
-        assert!(saved.iter().any(|p| p.id == "dreamina"));
+        assert!(saved.iter().any(|p| p.id == "chatgpt"));
 
         let mut retired = vec![provider("suno", "Suno", "https://suno.com", Category::Both)];
         sync_builtins(&mut retired);
