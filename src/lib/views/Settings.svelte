@@ -214,22 +214,22 @@
     <h2 class="section-title">{m.settingsTransfer()}</h2>
     <div class="row py-1.5">
       <span class="min-w-0 flex-1 truncate text-sm">{m.accountsTitle()}</span>
-      <button type="button" class="btn h-8 shrink-0 text-xs" onclick={() => void exportAccounts()}>
+      <button type="button" class="btn-success h-8 shrink-0 text-xs" onclick={() => void exportAccounts()}>
         <Download class="size-3.5" />
         {m.commonExport()}
       </button>
-      <button type="button" class="btn h-8 shrink-0 text-xs" onclick={() => void importAccounts()}>
+      <button type="button" class="btn-primary h-8 shrink-0 text-xs" onclick={() => void importAccounts()}>
         <Upload class="size-3.5" />
         {m.commonImport()}
       </button>
     </div>
     <div class="row py-1.5">
       <span class="min-w-0 flex-1 truncate text-sm">{m.promptsTitle()}</span>
-      <button type="button" class="btn h-8 shrink-0 text-xs" onclick={() => void exportPrompts()}>
+      <button type="button" class="btn-success h-8 shrink-0 text-xs" onclick={() => void exportPrompts()}>
         <Download class="size-3.5" />
         {m.commonExport()}
       </button>
-      <button type="button" class="btn h-8 shrink-0 text-xs" onclick={() => void importPrompts()}>
+      <button type="button" class="btn-primary h-8 shrink-0 text-xs" onclick={() => void importPrompts()}>
         <Upload class="size-3.5" />
         {m.commonImport()}
       </button>

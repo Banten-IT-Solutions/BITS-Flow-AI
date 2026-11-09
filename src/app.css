@@ -8,6 +8,8 @@
   --line: #26262b;
   --accent: #2dd4bf;
   --accent-fg: #06201d;
+  --success: #10b981;
+  --success-fg: #062018;
   --danger: #f87171;
   --danger-fg: #17171a;
   color-scheme: dark;
@@ -21,6 +23,8 @@
   --color-line: var(--line);
   --color-accent: var(--accent);
   --color-accent-fg: var(--accent-fg);
+  --color-success: var(--success);
+  --color-success-fg: var(--success-fg);
   --color-danger: var(--danger);
   --color-danger-fg: var(--danger-fg);
   /* Locked type scale: 12/13/14/16/20 */
@@ -72,6 +76,9 @@ textarea {
   }
   .btn-primary {
     @apply inline-flex h-9 items-center gap-1.5 rounded-md bg-accent px-3 text-sm font-medium text-accent-fg transition-opacity duration-150 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-success {
+    @apply inline-flex h-9 items-center gap-1.5 rounded-md bg-success px-3 text-sm font-medium text-success-fg transition-opacity duration-150 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-danger {
     @apply inline-flex h-9 items-center gap-1.5 rounded-md bg-danger px-3 text-sm font-medium text-danger-fg transition-opacity duration-150 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50;
