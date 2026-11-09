@@ -3,6 +3,13 @@
 All notable changes to BITS Flow AI are documented here. The format follows Keep a Changelog
 and the project uses semantic versioning.
 
+## [1.1.4](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.1.3...1.1.4) (2026-11-09)
+
+
+### Bug Fixes
+
+* stop forcing WebKit compositing disable; hand over to session user when launched as root ([de6c00d](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/de6c00dc5218aa8438f0c6d497c86c0747d77bc0))
+
 ## [1.1.3](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.1.2...1.1.3) (2026-11-09)
 
 
