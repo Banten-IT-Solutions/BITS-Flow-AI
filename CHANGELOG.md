@@ -3,6 +3,13 @@
 All notable changes to BITS Flow AI are documented here. The format follows Keep a Changelog
 and the project uses semantic versioning.
 
+## [1.5.3](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.5.2...1.5.3) (2026-11-09)
+
+
+### Bug Fixes
+
+* use the correct GitHub releases API path ([df6e710](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/df6e710556da31dac46a0dbdc193ce450f3509c4))
+
 ## [1.5.2](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.5.1...1.5.2) (2026-11-09)
 
 
