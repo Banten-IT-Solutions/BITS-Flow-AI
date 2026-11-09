@@ -124,17 +124,41 @@ pub fn install_deb_update(url: String) -> Result<(), String> {
     if !is_official_asset_url(&url) {
         return Err("refusing to install from untrusted update URL".into());
     }
-    let path = std::env::temp_dir().join(format!(
-        "bits-flow-ai-{}-{}.deb",
-        env!("CARGO_PKG_VERSION"),
-        std::process::id()
-    ));
+    let mut temp_path: Option<PathBuf> = None;
     let outcome = (|| -> Result<(), String> {
-        let mut file = fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&path)
-            .map_err(|e| e.to_string())?;
+        // Exclusive create prevents a pre-placed symlink in the world-writable
+        // temp dir from redirecting the root-run install. A recycled pid can
+        // hit a stale file from a crashed run, so step the suffix and retry.
+        let mut file = None;
+        let mut path = std::env::temp_dir().join(format!(
+            "bits-flow-ai-{}-{}.deb",
+            env!("CARGO_PKG_VERSION"),
+            std::process::id()
+        ));
+        for attempt in 0..3u32 {
+            match fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(&path)
+            {
+                Ok(handle) => {
+                    file = Some(handle);
+                    temp_path = Some(path.clone());
+                    break;
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+                    path = std::env::temp_dir().join(format!(
+                        "bits-flow-ai-{}-{}.deb",
+                        env!("CARGO_PKG_VERSION"),
+                        std::process::id() + attempt + 1
+                    ));
+                }
+                Err(e) => return Err(e.to_string()),
+            }
+        }
+        let Some(mut file) = file else {
+            return Err("could not create temp file for update download".into());
+        };
         let download = ureq::get(&url).call().map_err(|e| e.to_string())?;
         let mut reader = download.into_reader();
         let mut buffer = [0u8; 16 * 1024];
@@ -163,7 +187,9 @@ pub fn install_deb_update(url: String) -> Result<(), String> {
             Err("dpkg install failed".into())
         }
     })();
-    let _ = fs::remove_file(&path);
+    if let Some(path) = temp_path {
+        let _ = fs::remove_file(path);
+    }
     outcome
 }
 
