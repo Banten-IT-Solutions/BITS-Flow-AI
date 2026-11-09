@@ -91,5 +91,10 @@
   "errorsLoadFailed": "Could not load your data. Try restarting the app.",
   "updateAvailable": "Version {version} is available",
   "updateAction": "Update",
-  "appVersion": "Version {version}"
+  "appVersion": "Version {version}",
+  "commonExport": "Export",
+  "commonImport": "Import",
+  "exportDone": "Export complete",
+  "importSummary": "Imported {imported}, skipped {skipped}",
+  "errorInvalidFile": "Invalid file or not a matching export"
 }

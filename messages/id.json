@@ -91,5 +91,10 @@
   "errorsLoadFailed": "Gagal memuat data. Coba mulai ulang aplikasi.",
   "updateAvailable": "Versi {version} tersedia",
   "updateAction": "Perbarui",
-  "appVersion": "Versi {version}"
+  "appVersion": "Versi {version}",
+  "commonExport": "Ekspor",
+  "commonImport": "Impor",
+  "exportDone": "Ekspor selesai",
+  "importSummary": "{imported} diimpor, {skipped} dilewati",
+  "errorInvalidFile": "Berkas tidak valid atau bukan ekspor yang sesuai"
 }

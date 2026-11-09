@@ -3,5 +3,5 @@
   "identifier": "default",
   "description": "Default capability for the manager and persona windows",
   "windows": ["main", "persona-*"],
-  "permissions": ["core:default"]
+  "permissions": ["core:default", "dialog:default"]
 }

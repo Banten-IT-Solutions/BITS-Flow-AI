@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { open as openFileDialog, save as saveFileDialog } from "@tauri-apps/plugin-dialog";
 import { z } from "zod";
 
 export const accountSchema = z.object({
@@ -126,4 +127,28 @@ export function isValidProviderUrl(url: string): boolean {
 /** Open the GitHub releases page in the user's default browser. */
 export function openReleasePage() {
   return invoke("open_release_page");
+}
+
+/**
+ * Ask the user where to save an export file, then write it. Returns false
+ * when the dialog is cancelled; throws on write errors.
+ */
+export async function exportFile(defaultName: string, contents: string): Promise<boolean> {
+  const path = await saveFileDialog({
+    defaultPath: defaultName,
+    filters: [{ name: "JSON", extensions: ["json"] }],
+  });
+  if (!path) return false;
+  await invoke("export_file", { path, contents });
+  return true;
+}
+
+/** Ask the user to pick an import file; null when cancelled. */
+export async function importFile(): Promise<string | null> {
+  const path = await openFileDialog({
+    multiple: false,
+    filters: [{ name: "JSON", extensions: ["json"] }],
+  });
+  if (typeof path !== "string") return null;
+  return invoke("import_file", { path });
 }

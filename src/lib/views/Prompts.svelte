@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Copy, Pin, PinOff, Plus } from "@lucide/svelte";
-  import { savePrompts } from "../api";
+  import { Copy, Download, Pin, PinOff, Plus, Upload } from "@lucide/svelte";
+  import { exportFile, importFile, promptSchema, savePrompts } from "../api";
   import { copyText } from "../clipboard";
   import { commandError } from "../errors";
   import { m } from "../paraglide/messages";
@@ -10,6 +10,39 @@
   import type { Prompt } from "../types";
   import { get } from "svelte/store";
   import ConfirmDelete from "../ui/ConfirmDelete.svelte";
+  import { mergeById, parseItems } from "../transfer";
+
+  /** Write every prompt to a user-picked JSON file. */
+  async function exportPrompts() {
+    try {
+      const contents = JSON.stringify({ kind: "prompts", version: 1, items: get(prompts) }, null, 2);
+      const stamp = new Date().toISOString().slice(0, 10);
+      const saved = await exportFile(`bits-flow-ai-prompts-${stamp}.json`, contents);
+      if (saved) toast(m.exportDone());
+    } catch (e) {
+      toast(commandError(e));
+    }
+  }
+
+  /** Merge a user-picked prompts export into the current list by id. */
+  async function importPrompts() {
+    try {
+      const raw = await importFile();
+      if (raw === null) return;
+      const items = parseItems("prompts", promptSchema, raw);
+      if (!items) {
+        toast(m.errorInvalidFile());
+        return;
+      }
+      const prev = get(prompts);
+      const { merged, skipped } = mergeById(prev, items);
+      await savePrompts(merged);
+      prompts.set(merged);
+      toast(m.importSummary({ imported: merged.length - prev.length, skipped }));
+    } catch (e) {
+      toast(commandError(e));
+    }
+  }
   import Menu from "../ui/Menu.svelte";
   import PromptDialog from "../ui/PromptDialog.svelte";
 
@@ -98,6 +131,24 @@
         placeholder={m.commonSearch()}
         bind:value={query}
       />
+      <button
+        type="button"
+        class="btn-icon"
+        aria-label={m.commonExport()}
+        title={m.commonExport()}
+        onclick={() => void exportPrompts()}
+      >
+        <Download class="size-4" />
+      </button>
+      <button
+        type="button"
+        class="btn-icon"
+        aria-label={m.commonImport()}
+        title={m.commonImport()}
+        onclick={() => void importPrompts()}
+      >
+        <Upload class="size-4" />
+      </button>
       <button
         class="btn-primary"
         onclick={() => {

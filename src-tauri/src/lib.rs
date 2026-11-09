@@ -17,6 +17,7 @@ pub fn run() {
                 let _ = window.set_focus();
             }
         }))
+        .plugin(tauri_plugin_dialog::init())
         .manage(PersonaState::default())
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
@@ -50,6 +51,8 @@ pub fn run() {
             commands::clear_persona_data,
             commands::clear_all_persona_data,
             commands::open_release_page,
+            commands::export_file,
+            commands::import_file,
             persona::open_persona,
             persona::list_open_personas,
         ])

@@ -115,6 +115,19 @@ pub fn open_release_page() -> Result<(), String> {
     child.wait().map(|_| ()).map_err(|e| e.to_string())
 }
 
+/// Write a user-picked export file. The path always comes from the native
+/// save dialog, so the webview cannot target arbitrary paths by itself.
+#[tauri::command]
+pub fn export_file(path: String, contents: String) -> Result<(), String> {
+    fs::write(&path, contents).map_err(|e| e.to_string())
+}
+
+/// Read a user-picked import file back as text.
+#[tauri::command]
+pub fn import_file(path: String) -> Result<String, String> {
+    fs::read_to_string(&path).map_err(|e| e.to_string())
+}
+
 pub fn app_data_dir(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = app.path().app_local_data_dir().map_err(|e| e.to_string())?;
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
