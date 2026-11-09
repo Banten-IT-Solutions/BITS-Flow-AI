@@ -9,9 +9,11 @@
     value?: string;
     onchange?: (value: string) => void;
     id?: string;
+    /** Compact height/type for dense card layouts. */
+    compact?: boolean;
   };
 
-  let { options, ariaLabel, value = $bindable(""), onchange, id }: Props = $props();
+  let { options, ariaLabel, value = $bindable(""), onchange, id, compact = false }: Props = $props();
 
   let open = $state(false);
   let active = $state(0);
@@ -73,7 +75,7 @@
   <button
     {id}
     type="button"
-    class="input flex items-center justify-between gap-2 text-left"
+    class="input flex items-center justify-between gap-2 text-left {compact ? 'h-8 text-xs' : ''}"
     aria-haspopup="listbox"
     aria-expanded={open}
     aria-label={ariaLabel}

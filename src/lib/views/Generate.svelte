@@ -11,28 +11,20 @@
   import Select from "../ui/Select.svelte";
 
   let tab = $state<"image" | "video">("image");
-  let selectedProviderId = $state("");
-  let selectedAccountId = $state("");
-  let selectedPromptId = $state("");
   let launching = $state(false);
+  let accountByProvider = $state<Record<string, string>>({});
+  let promptByProvider = $state<Record<string, string>>({});
 
   const engineLabels = $derived({ webview: m.engineWebview(), chrome: m.engineChrome() });
   const visible = $derived(filterProviders($providers, tab));
-  const selectedProvider = $derived($providers.find((p) => p.id === selectedProviderId) ?? null);
-  const selectedAccount = $derived($accounts.find((a) => a.id === selectedAccountId) ?? null);
-  const selectedPrompt = $derived($prompts.find((p) => p.id === selectedPromptId) ?? null);
 
   // Pinned prompts first.
   const sortedPrompts = $derived([...$prompts].sort((a, b) => Number(b.pinned) - Number(a.pinned)));
 
-  function selectProvider(id: string) {
-    selectedProviderId = id;
-  }
-
-  async function go() {
-    const provider = selectedProvider;
-    const account = selectedAccount;
-    const prompt = selectedPrompt;
+  async function go(providerId: string) {
+    const provider = $providers.find((p) => p.id === providerId);
+    const account = $accounts.find((a) => a.id === accountByProvider[providerId]);
+    const prompt = $prompts.find((p) => p.id === promptByProvider[providerId]);
     if (!provider || !account || launching) return;
     launching = true;
     try {
@@ -47,16 +39,7 @@
       launching = false;
     }
   }
-
-  function onkeydown(e: KeyboardEvent) {
-    if (e.ctrlKey && !e.altKey && e.key === "Enter") {
-      e.preventDefault();
-      void go();
-    }
-  }
 </script>
-
-<svelte:window onkeydown={onkeydown} />
 
 <div class="view">
   <div class="space-y-1">
@@ -72,10 +55,7 @@
           ? "border-accent bg-accent font-medium text-accent-fg"
           : "border-line bg-surface text-muted hover:bg-bg hover:text-fg"}"
         aria-pressed={tab === id}
-        onclick={() => {
-          tab = id as "image" | "video";
-          selectedProviderId = "";
-        }}
+        onclick={() => (tab = id as "image" | "video")}
       >
         {label}
       </button>
@@ -86,82 +66,55 @@
     <EmptyState icon={Sparkles} message={m.generateEmpty()} />
   {:else}
     <div
-      class="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-1.5"
+      class="grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-1.5"
       role="group"
       aria-label={m.menuProviders()}
     >
       {#each visible as provider (provider.id)}
-        <button
-          type="button"
-          class="flex min-h-[76px] flex-col justify-between gap-2 rounded-md border p-3 text-left transition-colors duration-150 {selectedProviderId === provider.id
-            ? "border-accent bg-accent/10"
-            : "border-line bg-surface hover:bg-bg"}"
-          aria-pressed={selectedProviderId === provider.id}
-          onclick={() => selectProvider(provider.id)}
+        <div
+          class="flex flex-col gap-2 rounded-md border border-line bg-surface p-3 transition-colors duration-150 hover:border-muted/50"
         >
-          <span class="flex w-full items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
             <span
-              class="flex size-7 items-center justify-center rounded-md border border-line bg-bg text-xs font-semibold {selectedProviderId === provider.id
-                ? "text-accent"
-                : "text-muted"}"
+              class="flex size-6 shrink-0 items-center justify-center rounded-md border border-line bg-bg text-xs font-semibold text-muted"
               aria-hidden="true"
             >
               {provider.name.charAt(0).toUpperCase()}
             </span>
+            <span class="min-w-0 flex-1 truncate text-sm font-medium">{provider.name}</span>
             <span class="chip">{engineLabels[provider.engine]}</span>
-          </span>
-          <span class="truncate text-sm font-medium">{provider.name}</span>
-        </button>
-      {/each}
-    </div>
-
-    {#if selectedProvider}
-      <div class="card space-y-3">
-        <div class="flex items-center gap-2">
-          <span
-            class="flex size-7 items-center justify-center rounded-md border border-line bg-bg text-xs font-semibold text-accent"
-            aria-hidden="true"
-          >
-            {selectedProvider.name.charAt(0).toUpperCase()}
-          </span>
-          <span class="text-lg font-semibold">{selectedProvider.name}</span>
-          <span class="chip">{engineLabels[selectedProvider.engine]}</span>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <label class="flex flex-col gap-1">
-            <span class="view-desc">{m.menuAccounts()}</span>
+          </div>
+          <Select
+            compact
+            ariaLabel={`${m.menuAccounts()} — ${provider.name}`}
+            bind:value={accountByProvider[provider.id]}
+            options={[
+              { value: "", label: m.commonNone(), disabled: true },
+              ...$accounts.map((a) => ({ value: a.id, label: a.name })),
+            ]}
+          />
+          {#if sortedPrompts.length > 0}
             <Select
-              ariaLabel={m.menuAccounts()}
-              bind:value={selectedAccountId}
-              options={[
-                { value: "", label: m.commonNone(), disabled: true },
-                ...$accounts.map((a) => ({ value: a.id, label: a.name })),
-              ]}
-            />
-          </label>
-          <label class="flex flex-col gap-1">
-            <span class="view-desc">{m.menuPrompts()}</span>
-            <Select
-              ariaLabel={m.menuPrompts()}
-              bind:value={selectedPromptId}
+              compact
+              ariaLabel={`${m.menuPrompts()} — ${provider.name}`}
+              bind:value={promptByProvider[provider.id]}
               options={[
                 { value: "", label: m.commonNone() },
                 ...sortedPrompts.map((p) => ({ value: p.id, label: p.title })),
               ]}
             />
-          </label>
-        </div>
-        <div class="flex justify-end">
+          {/if}
           <button
-            class="btn-primary h-10 px-6 text-base"
-            disabled={!selectedAccount || launching}
-            onclick={() => void go()}
+            type="button"
+            class="btn-primary h-8 w-full justify-center"
+            disabled={!accountByProvider[provider.id] || launching}
+            onclick={() => void go(provider.id)}
           >
-            <Play class="size-4" />
-            {selectedPrompt ? m.generateOpenCopy() : m.commonLaunch()}
+            <Play class="size-3.5" />
+            {promptByProvider[provider.id] ? m.generateOpenCopy() : m.commonLaunch()}
           </button>
         </div>
-      </div>
-    {/if}
+      {/each}
+    </div>
   {/if}
 </div>
