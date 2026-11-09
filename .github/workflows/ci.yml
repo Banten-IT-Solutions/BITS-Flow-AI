@@ -86,13 +86,17 @@ jobs:
             libayatana-appindicator3-dev librsvg2-dev
 
       - name: Check formatting
+        working-directory: src-tauri
         run: cargo fmt --check
 
       - name: Run clippy
-        run: cargo clippy -- -D warnings
+        working-directory: src-tauri
+        run: cargo clippy --all-targets -- -D warnings
 
       - name: Compile debug binary
+        working-directory: src-tauri
         run: cargo build
 
       - name: Run Rust tests
+        working-directory: src-tauri
         run: cargo test
