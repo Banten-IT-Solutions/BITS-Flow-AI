@@ -2,8 +2,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::os::unix::fs::MetadataExt;
-use std::process::Command;
 use std::os::unix::process::CommandExt;
+use std::process::Command;
 
 /// Effective uid of this process, read from /proc (no libc dependency).
 fn effective_uid() -> Option<u32> {
