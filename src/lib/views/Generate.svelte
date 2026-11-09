@@ -4,6 +4,7 @@
   import { launchPersona } from "../launch";
   import { m } from "../paraglide/messages";
   import { copyText } from "../clipboard";
+  import { filterProviders } from "../settings";
   import { accounts, prompts, providers } from "../stores";
   import { toast } from "../toast";
 
@@ -14,7 +15,7 @@
   let launching = $state(false);
 
   const engineLabels = $derived({ webview: m.engineWebview(), chrome: m.engineChrome() });
-  const visible = $derived($providers.filter((p) => p.category === tab || p.category === "both"));
+  const visible = $derived(filterProviders($providers, tab));
   const selectedProvider = $derived($providers.find((p) => p.id === selectedProviderId) ?? null);
   const selectedAccount = $derived($accounts.find((a) => a.id === selectedAccountId) ?? null);
   const selectedPrompt = $derived($prompts.find((p) => p.id === selectedPromptId) ?? null);

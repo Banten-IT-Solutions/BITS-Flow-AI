@@ -8,9 +8,13 @@
 
   let { prompt, onclose }: { prompt: Prompt | null; onclose: () => void } = $props();
 
+  // svelte-ignore state_referenced_locally
   let title = $state(prompt?.title ?? "");
+  // svelte-ignore state_referenced_locally
   let body = $state(prompt?.body ?? "");
+  // svelte-ignore state_referenced_locally
   let category = $state<Category>(prompt?.category ?? "both");
+  // svelte-ignore state_referenced_locally
   let pinned = $state(prompt?.pinned ?? false);
   let saving = $state(false);
   let error = $state("");

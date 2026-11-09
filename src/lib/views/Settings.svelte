@@ -39,6 +39,12 @@
     } catch (e) {
       settings.set(prev);
       applyTheme();
+      // Revert the live locale the same way the success branch resolved it.
+      if (part.language) {
+        const locale = applyLocale();
+        await setLocale(locale);
+        uiLocale.set(locale);
+      }
       toast(commandError(e));
     }
   }
@@ -67,9 +73,11 @@
       if (target.mode === "clearAll") {
         const result = await clearAllPersonaData();
         toast(
-          result.skipped.length > 0
-            ? m.settingsSkippedOpen({ count: result.skipped.length })
-            : m.settingsAllCleared(),
+          result.failed.length > 0
+            ? m.settingsClearFailed({ count: result.failed.length })
+            : result.skipped.length > 0
+              ? m.settingsSkippedOpen({ count: result.skipped.length })
+              : m.settingsAllCleared(),
         );
       } else {
         await clearPersonaData(target.id);

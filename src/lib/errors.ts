@@ -8,5 +8,6 @@ import { m } from "./paraglide/messages";
 export function commandError(e: unknown): string {
   const raw = e instanceof Error ? e.message : String(e);
   if (raw === "error.close_first") return m.errorsCloseFirst();
+  if (raw === "error.no_data_dir") return m.errorNoDataDir();
   return m.errorCommandFailed({ message: raw });
 }

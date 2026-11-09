@@ -1,6 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
 import { z } from "zod";
-import { DEFAULT_SETTINGS } from "./types";
 
 export const accountSchema = z.object({
   id: z.string().min(1),
@@ -36,7 +35,6 @@ export const settingsSchema = z.object({
 
 export const openPersonaResultSchema = z.object({
   label: z.string(),
-  openOrder: z.array(z.string()),
 });
 
 export type OpenPersonaResult = z.infer<typeof openPersonaResultSchema>;
@@ -85,8 +83,6 @@ export const recentEntrySchema = z.object({
   ts: z.number(),
 });
 
-export type RecentEntryParsed = z.infer<typeof recentEntrySchema>;
-
 export function listRecent() {
   return invoke("list_recent").then(z.array(recentEntrySchema).parse);
 }
@@ -107,9 +103,8 @@ export function clearPersonaData(personaId: string) {
 export const clearAllResultSchema = z.object({
   cleared: z.array(z.string()),
   skipped: z.array(z.string()),
+  failed: z.array(z.string()),
 });
-
-export type ClearAllResult = z.infer<typeof clearAllResultSchema>;
 
 export function clearAllPersonaData() {
   return invoke("clear_all_persona_data").then(clearAllResultSchema.parse);
@@ -128,5 +123,3 @@ export function isValidProviderUrl(url: string): boolean {
     return false;
   }
 }
-
-export { DEFAULT_SETTINGS };

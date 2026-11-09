@@ -1,6 +1,8 @@
 import { get, writable } from "svelte/store";
 import { getSettings, listAccounts, listPrompts, listProviders, listRecent } from "./api";
+import { m } from "./paraglide/messages";
 import { resolveLocale, resolveTheme } from "./settings";
+import { toast } from "./toast";
 import {
   type Account,
   DEFAULT_SETTINGS,
@@ -18,9 +20,6 @@ export const settings = writable<Settings>(DEFAULT_SETTINGS);
 export const accounts = writable<Account[]>([]);
 export const providers = writable<Provider[]>([]);
 export const prompts = writable<Prompt[]>([]);
-export const activePersona = writable<string | null>(null);
-/** Persona labels in open order (oldest first), mirrored from the Rust LRU. */
-export const openOrder = writable<string[]>([]);
 /** Labels of persona windows that are currently open (Home badge). */
 export const openLabels = writable<string[]>([]);
 /** Recent "persona opened provider" activity, newest first. */
@@ -29,13 +28,21 @@ export const recent = writable<RecentEntry[]>([]);
 export const uiLocale = writable<"id" | "en">("id");
 
 export async function loadAll(): Promise<void> {
-  const [s, a, p, pr, r] = await Promise.all([
-    getSettings(),
-    listAccounts(),
-    listProviders(),
-    listPrompts(),
-    listRecent().catch(() => []),
-  ]);
+  let loaded: [Settings, Account[], Provider[], Prompt[], RecentEntry[]];
+  try {
+    loaded = await Promise.all([
+      getSettings(),
+      listAccounts(),
+      listProviders(),
+      listPrompts(),
+      listRecent().catch(() => []),
+    ]);
+  } catch (e) {
+    console.error("init failed", e);
+    toast(m.errorsLoadFailed());
+    throw e;
+  }
+  const [s, a, p, pr, r] = loaded;
   settings.set(s);
   accounts.set(a);
   providers.set(p);

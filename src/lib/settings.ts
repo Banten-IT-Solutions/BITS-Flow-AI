@@ -1,4 +1,4 @@
-import type { Category, Engine, LanguageSetting, Provider, ThemeSetting } from "./types";
+import type { Category, LanguageSetting, Provider, ThemeSetting } from "./types";
 
 /** Resolve a settings value against the host preference. Default locale is `id`. */
 export function resolveLocale(setting: LanguageSetting, systemLocale: string): "id" | "en" {
@@ -13,10 +13,6 @@ export function resolveTheme(setting: ThemeSetting, darkPreferred: boolean): "li
     return darkPreferred ? "dark" : "light";
   }
   return setting;
-}
-
-export function engineLabel(engine: Engine, t: { webview: string; chrome: string }): string {
-  return engine === "chrome" ? t.chrome : t.webview;
 }
 
 export function categoryLabel(

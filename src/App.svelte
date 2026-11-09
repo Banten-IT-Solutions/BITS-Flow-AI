@@ -12,6 +12,7 @@
   } from "@lucide/svelte";
   import { onMount } from "svelte";
   import { get } from "svelte/store";
+  import { listen } from "@tauri-apps/api/event";
   import { commandError } from "./lib/errors";
   import { lastUsedProvider, launchPersona, refreshOpenPersonas } from "./lib/launch";
   import { m } from "./lib/paraglide/messages";
@@ -64,7 +65,16 @@
       .then(() => setLocale(get(uiLocale)))
       .catch((e) => console.error("init failed", e));
     void refreshOpenPersonas();
-    return stop;
+    // Persona windows can be closed outside this view; Rust emits this event
+    // so the Home badge stays accurate.
+    let unlisten: (() => void) | undefined;
+    void listen("persona-window-closed", () => void refreshOpenPersonas()).then((fn) => {
+      unlisten = fn;
+    });
+    return () => {
+      stop();
+      unlisten?.();
+    };
   });
 
   /** 3-state cycle: system → light → dark → system. */
@@ -79,6 +89,7 @@
       await saveSettings(nextSettings);
     } catch (e) {
       settings.set(prev);
+      applyTheme();
       toast(commandError(e));
     }
   }
@@ -105,7 +116,7 @@
   }
 
   function onkeydown(e: KeyboardEvent) {
-    if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key >= "1" && e.key <= "9") {
+    if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key >= "1" && e.key <= "9" && !isTypingTarget(e.target)) {
       const account = get(accounts)[Number(e.key) - 1];
       if (account) {
         e.preventDefault();

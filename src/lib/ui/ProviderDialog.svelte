@@ -9,9 +9,13 @@
 
   let { provider, onclose }: { provider: Provider | null; onclose: () => void } = $props();
 
+  // svelte-ignore state_referenced_locally
   let name = $state(provider?.name ?? "");
+  // svelte-ignore state_referenced_locally
   let url = $state(provider?.url ?? "");
+  // svelte-ignore state_referenced_locally
   let category = $state<Category>(provider?.category ?? "both");
+  // svelte-ignore state_referenced_locally
   let engine = $state<Engine>(provider?.engine ?? "webview");
   let saving = $state(false);
   let error = $state("");

@@ -56,13 +56,10 @@
   "providersTitle": "Providers",
   "providersDescription": "Registry of AI provider URLs. Only http/https URLs are accepted.",
   "providersEmpty": "No providers yet.",
-  "providersBuiltin": "Built-in",
-  "providersCustom": "Custom",
   "providersFilterAll": "All",
   "providersLockedHint": "Built-in provider — name and URL are locked.",
   "generateImage": "Image",
   "generateVideo": "Video",
-  "generateAccount": "Account",
   "generateEmpty": "No providers for this category.",
   "generateOpenCopy": "Open & Copy",
   "generatePromptCopied": "Prompt copied",
@@ -90,6 +87,7 @@
   "settingsClearAllData": "Clear all data",
   "settingsAllCleared": "All persona data cleared",
   "settingsSkippedOpen": "Skipped {count} open persona(s)",
+  "settingsClearFailed": "Failed to clear {count} persona(s)",
   "settingsAbout": "About",
   "settingsVersion": "Version",
   "settingsRepository": "Source code",
@@ -98,5 +96,7 @@
   "errorInvalidUrl": "URL must start with http:// or https://",
   "errorInvalidEmail": "Invalid email",
   "errorCommandFailed": "Command failed: {message}",
-  "errorsCloseFirst": "Close this persona's window first, then clear its data."
+  "errorsCloseFirst": "Close this persona's window first, then clear its data.",
+  "errorNoDataDir": "No data found for this persona.",
+  "errorsLoadFailed": "Could not load your data. Try restarting the app."
 }

@@ -4,6 +4,8 @@
 
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Mutex, MutexGuard, OnceLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::de::DeserializeOwned;
@@ -125,9 +127,26 @@ fn read_json<T: DeserializeOwned + Default>(path: &Path) -> Result<T, String> {
     serde_json::from_str(&raw).map_err(|e| format!("{}: {e}", path.display()))
 }
 
-/// Atomic-ish write: temp file + rename so a crash never truncates data.
+/// Global write lock: every JSON mutation holds it so concurrent commands
+/// cannot interleave read-modify-write cycles or tmp-file renames.
+static IO_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+
+fn io_guard() -> MutexGuard<'static, ()> {
+    IO_LOCK
+        .get_or_init(|| Mutex::new(()))
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
+/// Monotonic counter for unique tmp file names (pid + seq, see `write_json`).
+static TMP_SEQ: AtomicU64 = AtomicU64::new(0);
+
+/// Atomic-ish write: uniquely-named temp file + rename so a crash never
+/// truncates data. `rename` overwrites the target; stale `.tmp` leftovers
+/// from a crash are harmless and never cleaned up.
 fn write_json<T: Serialize>(path: &Path, value: &T) -> Result<(), String> {
-    let tmp = path.with_extension("tmp");
+    let seq = TMP_SEQ.fetch_add(1, Ordering::Relaxed);
+    let tmp = path.with_extension(format!("tmp{}.{}", std::process::id(), seq));
     let raw = serde_json::to_string_pretty(value).map_err(|e| e.to_string())?;
     fs::write(&tmp, raw).map_err(|e| e.to_string())?;
     fs::rename(&tmp, path).map_err(|e| e.to_string())
@@ -216,6 +235,7 @@ pub fn save_accounts(app: AppHandle, accounts: Vec<Account>) -> Result<(), Strin
     for account in &accounts {
         validate_account(account)?;
     }
+    let _g = io_guard();
     write_json(&path_for(&app, "accounts.json")?, &accounts)
 }
 
@@ -224,6 +244,7 @@ pub fn list_providers(app: AppHandle) -> Result<Vec<Provider>, String> {
     let path = path_for(&app, "providers.json")?;
     if !path.exists() {
         let seeded = default_providers();
+        let _g = io_guard();
         write_json(&path, &seeded)?;
         return Ok(seeded);
     }
@@ -245,6 +266,7 @@ pub fn save_providers(app: AppHandle, providers: Vec<Provider>) -> Result<(), St
     for provider in &providers {
         validate_provider(provider)?;
     }
+    let _g = io_guard();
     write_json(&path_for(&app, "providers.json")?, &providers)
 }
 
@@ -268,6 +290,7 @@ pub fn save_prompts(app: AppHandle, prompts: Vec<Prompt>) -> Result<(), String> 
     for prompt in &prompts {
         validate_prompt(prompt)?;
     }
+    let _g = io_guard();
     write_json(&path_for(&app, "prompts.json")?, &prompts)
 }
 
@@ -279,6 +302,7 @@ pub fn get_settings(app: AppHandle) -> Result<Settings, String> {
 #[tauri::command]
 pub fn save_settings(app: AppHandle, settings: Settings) -> Result<Settings, String> {
     let settings = settings.normalized();
+    let _g = io_guard();
     write_json(&path_for(&app, "settings.json")?, &settings)?;
     Ok(settings)
 }
@@ -339,6 +363,7 @@ pub fn log_activity(app: AppHandle, input: RecentInput) -> Result<Vec<RecentEntr
     if !crate::persona::is_valid_persona_id(&input.persona_id) {
         return Err(format!("invalid persona id: {:?}", input.persona_id));
     }
+    let _g = io_guard();
     let mut recent: Vec<RecentEntry> = read_json(&path_for(&app, "recent.json")?)?;
     recent.insert(
         0,
@@ -366,9 +391,10 @@ pub fn clear_persona_data(app: AppHandle, persona_id: String) -> Result<(), Stri
     if app.get_webview_window(&label).is_some() {
         return Err("error.close_first".to_string());
     }
+    let _g = io_guard();
     let dir = app_data_dir(&app)?.join("profiles").join(&persona_id);
     if !dir.is_dir() {
-        return Err(format!("no data directory for persona: {persona_id}"));
+        return Err("error.no_data_dir".to_string());
     }
     fs::remove_dir_all(&dir).map_err(|e| e.to_string())
 }
@@ -379,14 +405,17 @@ pub fn clear_persona_data(app: AppHandle, persona_id: String) -> Result<(), Stri
 pub struct ClearAllResult {
     pub cleared: Vec<String>,
     pub skipped: Vec<String>,
+    pub failed: Vec<String>,
 }
 
 #[tauri::command]
 pub fn clear_all_persona_data(app: AppHandle) -> Result<ClearAllResult, String> {
+    let _g = io_guard();
     let profiles = app_data_dir(&app)?.join("profiles");
     let mut result = ClearAllResult {
         cleared: Vec::new(),
         skipped: Vec::new(),
+        failed: Vec::new(),
     };
     if !profiles.is_dir() {
         return Ok(result);
@@ -404,8 +433,11 @@ pub fn clear_all_persona_data(app: AppHandle) -> Result<ClearAllResult, String> 
             result.skipped.push(name.to_string());
             continue;
         }
-        fs::remove_dir_all(&path).map_err(|e| e.to_string())?;
-        result.cleared.push(name.to_string());
+        // Collect per-dir failures instead of aborting the whole sweep.
+        match fs::remove_dir_all(&path) {
+            Ok(()) => result.cleared.push(name.to_string()),
+            Err(_) => result.failed.push(name.to_string()),
+        }
     }
     Ok(result)
 }

@@ -24,7 +24,6 @@ pub struct PersonaState {
 #[serde(rename_all = "camelCase")]
 pub struct OpenPersonaResult {
     pub label: String,
-    pub open_order: Vec<String>,
 }
 
 fn persona_label(persona_id: &str) -> String {
@@ -121,13 +120,9 @@ pub fn open_persona(
         closed.push(victim);
     }
     order.retain(|l| !closed.contains(l));
-    let snapshot = order.clone();
     drop(order);
 
-    Ok(OpenPersonaResult {
-        label,
-        open_order: snapshot,
-    })
+    Ok(OpenPersonaResult { label })
 }
 
 /// Labels of every currently-open persona window (`persona-*`), for the

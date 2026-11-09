@@ -56,13 +56,10 @@
   "providersTitle": "Penyedia",
   "providersDescription": "Registry URL penyedia AI. URL hanya menerima skema http/https.",
   "providersEmpty": "Belum ada penyedia.",
-  "providersBuiltin": "Bawaan",
-  "providersCustom": "Kustom",
   "providersFilterAll": "Semua",
   "providersLockedHint": "Penyedia bawaan — nama dan URL terkunci.",
   "generateImage": "Gambar",
   "generateVideo": "Video",
-  "generateAccount": "Akun",
   "generateEmpty": "Tidak ada penyedia untuk kategori ini.",
   "generateOpenCopy": "Buka & Salin",
   "generatePromptCopied": "Prompt disalin",
@@ -90,6 +87,7 @@
   "settingsClearAllData": "Hapus semua data",
   "settingsAllCleared": "Semua data persona dihapus",
   "settingsSkippedOpen": "{count} persona masih terbuka dan dilewati",
+  "settingsClearFailed": "Gagal menghapus data {count} persona",
   "settingsAbout": "Tentang",
   "settingsVersion": "Versi",
   "settingsRepository": "Kode sumber",
@@ -98,5 +96,7 @@
   "errorInvalidUrl": "URL harus dimulai dengan http:// atau https://",
   "errorInvalidEmail": "Email tidak valid",
   "errorCommandFailed": "Perintah gagal: {message}",
-  "errorsCloseFirst": "Tutup jendela persona ini terlebih dahulu, lalu hapus datanya."
+  "errorsCloseFirst": "Tutup jendela persona ini terlebih dahulu, lalu hapus datanya.",
+  "errorNoDataDir": "Tidak ada data untuk persona ini.",
+  "errorsLoadFailed": "Gagal memuat data. Coba mulai ulang aplikasi."
 }

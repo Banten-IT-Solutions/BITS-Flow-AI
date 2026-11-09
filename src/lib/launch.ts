@@ -1,5 +1,5 @@
 import { listOpenPersonas, logActivity, type OpenPersonaResult, openPersona } from "./api";
-import { activePersona, openLabels, openOrder, recent } from "./stores";
+import { openLabels, recent } from "./stores";
 import type { Account, Provider, RecentEntry } from "./types";
 
 /** Most recently used provider for a persona, or undefined if never used. */
@@ -22,8 +22,6 @@ export async function launchPersona(
   provider: Provider,
 ): Promise<OpenPersonaResult> {
   const result = await openPersona(account.id, provider.url, provider.engine);
-  activePersona.set(account.id);
-  openOrder.set(result.openOrder);
   void refreshOpenPersonas();
   try {
     recent.set(

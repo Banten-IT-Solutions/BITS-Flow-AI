@@ -70,7 +70,7 @@
       transition:fly={{ y: 4, duration: 150 }}
       role="menu"
     >
-      {#each items as item (item.kind === "action" ? item.label : item.label)}
+      {#each items as item (item.label)}
         {#if item.kind === "action"}
           <button
             type="button"

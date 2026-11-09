@@ -9,8 +9,11 @@
 
   let { account, onclose }: { account: Account | null; onclose: () => void } = $props();
 
+  // svelte-ignore state_referenced_locally
   let name = $state(account?.name ?? "");
+  // svelte-ignore state_referenced_locally
   let email = $state(account?.email ?? "");
+  // svelte-ignore state_referenced_locally
   let color = $state(account?.color ?? PERSONA_COLORS[0]);
   let saving = $state(false);
   let error = $state("");

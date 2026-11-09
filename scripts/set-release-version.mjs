@@ -22,4 +22,12 @@ patch("src-tauri/tauri.conf.json", /"version":\s*"[^"]*"/, `"version": "${versio
 // The [package] version is the only `version =` at line start in Cargo.toml.
 patch("src-tauri/Cargo.toml", /^version\s*=\s*"[^"]*"/m, `version = "${version}"`);
 
+// Cargo.lock keeps its formatter-approved layout; rewrite only the version
+// line inside the `name = "bits-flow-ai"` package block (plain text swap).
+patch(
+  "src-tauri/Cargo.lock",
+  /name = "bits-flow-ai"\nversion = "[^"]*"/,
+  `name = "bits-flow-ai"\nversion = "${version}"`,
+);
+
 console.log(`Aligned release version to ${version}`);
