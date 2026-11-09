@@ -3,6 +3,13 @@
 All notable changes to BITS Flow AI are documented here. The format follows Keep a Changelog
 and the project uses semantic versioning.
 
+## [1.1.9](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.1.8...1.1.9) (2026-11-09)
+
+
+### Bug Fixes
+
+* stop Paraglide setLocale from reloading the page ([b951714](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/b951714d202ec3664f6069474d6b9d337e4a625b)), closes [#key](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/issues/key)
+
 ## [1.1.8](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.1.7...1.1.8) (2026-11-09)
 
 
