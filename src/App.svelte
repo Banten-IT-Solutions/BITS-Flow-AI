@@ -18,6 +18,7 @@
   import { activeMenu, accounts, loadAll, providers, recent, uiLocale } from "./lib/stores";
   import type { Account, MenuId } from "./lib/types";
   import logo from "./assets/logo.png";
+  import pkg from "../package.json";
   import Accounts from "./lib/views/Accounts.svelte";
   import Generate from "./lib/views/Generate.svelte";
   import Home from "./lib/views/Home.svelte";
@@ -130,8 +131,8 @@
       {/key}
     </ul>
 
-    <div class="mt-auto flex items-center justify-between border-t border-line px-4 py-3">
-      <span class="chip uppercase" title={m.settingsLanguage()}>{$uiLocale}</span>
+    <div class="mt-auto flex items-center border-t border-line px-4 py-3">
+      <span class="text-xs font-medium text-muted" title="BITS Flow AI">v{pkg.version}</span>
     </div>
   </nav>
 
