@@ -32,7 +32,6 @@
     { id: "all", label: () => m.providersFilterAll() },
     { id: "image", label: () => catLabels.image },
     { id: "video", label: () => catLabels.video },
-    { id: "both", label: () => catLabels.both },
   ];
 
   const sorted = $derived.by(() => {

@@ -14,7 +14,7 @@
   // svelte-ignore state_referenced_locally
   let body = $state(prompt?.body ?? "");
   // svelte-ignore state_referenced_locally
-  let category = $state<Category>(prompt?.category ?? "both");
+  let category = $state<Category>(prompt?.category ?? "image");
   // svelte-ignore state_referenced_locally
   let pinned = $state(prompt?.pinned ?? false);
   let saving = $state(false);
@@ -34,7 +34,6 @@
   const catLabels = $derived({
     image: m.categoryImage(),
     video: m.categoryVideo(),
-    both: m.categoryBoth(),
   });
 
   async function submit(e: SubmitEvent) {
@@ -88,7 +87,7 @@
         <Select
           ariaLabel={m.commonCategory()}
           bind:value={category}
-          options={(["image", "video", "both"] as Category[]).map((c) => ({
+          options={(["image", "video"] as Exclude<Category, "both">[]).map((c) => ({
             value: c,
             label: catLabels[c],
           }))}
