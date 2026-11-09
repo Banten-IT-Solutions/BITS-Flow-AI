@@ -7,6 +7,7 @@
   import { filterProviders } from "../settings";
   import { accounts, prompts, providers } from "../stores";
   import { toast } from "../toast";
+import Select from "../ui/Select.svelte";
 
   let tab = $state<"image" | "video">("image");
   let selectedProviderId = $state("");
@@ -118,21 +119,25 @@
               <div class="grid grid-cols-2 gap-3">
                 <label class="flex flex-col gap-1">
                   <span class="view-desc">{m.menuAccounts()}</span>
-                  <select class="input" bind:value={selectedAccountId}>
-                    <option value="" disabled>{m.commonNone()}</option>
-                    {#each $accounts as a (a.id)}
-                      <option value={a.id}>{a.name}</option>
-                    {/each}
-                  </select>
+                  <Select
+                    ariaLabel={m.menuAccounts()}
+                    bind:value={selectedAccountId}
+                    options={[
+                      { value: "", label: m.commonNone(), disabled: true },
+                      ...$accounts.map((a) => ({ value: a.id, label: a.name })),
+                    ]}
+                  />
                 </label>
                 <label class="flex flex-col gap-1">
                   <span class="view-desc">{m.menuPrompts()}</span>
-                  <select class="input" bind:value={selectedPromptId}>
-                    <option value="">{m.commonNone()}</option>
-                    {#each sortedPrompts as prompt (prompt.id)}
-                      <option value={prompt.id}>{prompt.title}</option>
-                    {/each}
-                  </select>
+                  <Select
+                    ariaLabel={m.menuPrompts()}
+                    bind:value={selectedPromptId}
+                    options={[
+                      { value: "", label: m.commonNone() },
+                      ...sortedPrompts.map((p) => ({ value: p.id, label: p.title })),
+                    ]}
+                  />
                 </label>
               </div>
               <button

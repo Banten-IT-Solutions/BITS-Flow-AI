@@ -6,6 +6,7 @@
   import { providers } from "../stores";
   import type { Category, Engine, Provider } from "../types";
   import Modal from "../ui/Modal.svelte";
+  import Select from "../ui/Select.svelte";
 
   let { provider, onclose }: { provider: Provider | null; onclose: () => void } = $props();
 
@@ -96,19 +97,25 @@
     <div class="grid grid-cols-2 gap-3">
       <label class="flex flex-col gap-1">
         <span class="view-desc">{m.commonCategory()}</span>
-        <select class="input" bind:value={category}>
-          {#each ["image", "video", "both"] as c (c)}
-            <option value={c}>{catLabels[c as Category]}</option>
-          {/each}
-        </select>
+        <Select
+          ariaLabel={m.commonCategory()}
+          bind:value={category}
+          options={(["image", "video", "both"] as Category[]).map((c) => ({
+            value: c,
+            label: catLabels[c],
+          }))}
+        />
       </label>
       <label class="flex flex-col gap-1">
         <span class="view-desc">{m.commonEngine()}</span>
-        <select class="input" bind:value={engine}>
-          {#each ["webview", "chrome"] as en (en)}
-            <option value={en}>{engineLabels[en as Engine]}</option>
-          {/each}
-        </select>
+        <Select
+          ariaLabel={m.commonEngine()}
+          bind:value={engine}
+          options={(["webview", "chrome"] as Engine[]).map((en) => ({
+            value: en,
+            label: engineLabels[en],
+          }))}
+        />
       </label>
     </div>
     {#if error}<p class="error-text">{error}</p>{/if}

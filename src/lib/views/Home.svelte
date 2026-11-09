@@ -9,8 +9,10 @@
   import { formatRelative } from "../time";
   import type { Account } from "../types";
   import AccountDialog from "../ui/AccountDialog.svelte";
+
   import ConfirmDelete from "../ui/ConfirmDelete.svelte";
   import Menu, { type MenuItem } from "../ui/Menu.svelte";
+  import Select from "../ui/Select.svelte";
 
   let selectedProvider = $state("");
   let selectedAccount = $state("");
@@ -156,21 +158,25 @@
     <div class="flex flex-wrap items-end gap-3">
       <label class="flex w-60 flex-col gap-1">
         <span class="view-desc">{m.menuProviders()}</span>
-        <select class="input" bind:value={selectedProvider}>
-          <option value="" disabled>{m.commonNone()}</option>
-          {#each $providers as p (p.id)}
-            <option value={p.id}>{p.name}</option>
-          {/each}
-        </select>
+        <Select
+          ariaLabel={m.menuProviders()}
+          bind:value={selectedProvider}
+          options={[
+            { value: "", label: m.commonNone(), disabled: true },
+            ...$providers.map((p) => ({ value: p.id, label: p.name })),
+          ]}
+        />
       </label>
       <label class="flex w-60 flex-col gap-1">
         <span class="view-desc">{m.menuAccounts()}</span>
-        <select class="input" bind:value={selectedAccount}>
-          <option value="" disabled>{m.commonNone()}</option>
-          {#each $accounts as a (a.id)}
-            <option value={a.id}>{a.name}</option>
-          {/each}
-        </select>
+        <Select
+          ariaLabel={m.menuAccounts()}
+          bind:value={selectedAccount}
+          options={[
+            { value: "", label: m.commonNone(), disabled: true },
+            ...$accounts.map((a) => ({ value: a.id, label: a.name })),
+          ]}
+        />
       </label>
       <button
         class="btn-primary h-10 px-6 text-base"

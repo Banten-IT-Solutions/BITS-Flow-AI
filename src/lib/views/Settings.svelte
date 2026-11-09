@@ -9,6 +9,7 @@
   import type { Settings } from "../types";
   import { get } from "svelte/store";
   import ConfirmDelete from "../ui/ConfirmDelete.svelte";
+  import Select from "../ui/Select.svelte";
 
   let confirmTarget = $state<{ id: string; name: string; mode: "clear" | "clearAll" } | null>(
     null,
@@ -92,35 +93,30 @@
     <div class="grid grid-cols-2 gap-x-6 gap-y-4">
       <label class="flex flex-col gap-1">
         <span class="text-sm font-medium">{m.settingsLanguage()}</span>
-        <select
-          class="input"
+        <Select
+          ariaLabel={m.settingsLanguage()}
           value={$settings.language}
-          onchange={(e) => void patch({ language: e.currentTarget.value as Settings["language"] })}
-        >
-          <option value="system">{m.settingsSystem()}</option>
-          <option value="id">Bahasa Indonesia</option>
-          <option value="en">English</option>
-        </select>
+          options={[
+            { value: "system", label: m.settingsSystem() },
+            { value: "id", label: "Bahasa Indonesia" },
+            { value: "en", label: "English" },
+          ]}
+          onchange={(v) => void patch({ language: v as Settings["language"] })}
+        />
       </label>
-    </div>
-  </section>
-
-  <section class="card space-y-3">
-    <h2 class="section-title">{m.settingsWindowSection()}</h2>
-    <div class="grid grid-cols-2 gap-x-6 gap-y-4">
       <label class="flex flex-col gap-1">
         <span class="text-sm font-medium">{m.settingsCloseBehavior()}</span>
-        <select
-          class="input"
+        <Select
+          ariaLabel={m.settingsCloseBehavior()}
           value={$settings.closeBehavior}
-          onchange={(e) =>
-            void patch({ closeBehavior: e.currentTarget.value as Settings["closeBehavior"] })}
-        >
-          <option value="exit">{m.settingsCloseExit()}</option>
-          <option value="hide">{m.settingsCloseHide()}</option>
-        </select>
+          options={[
+            { value: "exit", label: m.settingsCloseExit() },
+            { value: "hide", label: m.settingsCloseHide() },
+          ]}
+          onchange={(v) => void patch({ closeBehavior: v as Settings["closeBehavior"] })}
+        />
       </label>
-      <label class="flex flex-col gap-1">
+      <label class="flex max-w-48 flex-col gap-1">
         <span class="text-sm font-medium">{m.settingsLruSize()}</span>
         <input
           class="input"

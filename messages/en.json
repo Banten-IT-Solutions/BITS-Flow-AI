@@ -76,7 +76,6 @@
   "settingsLruSize": "Open persona cap (LRU)",
   "settingsSaved": "Settings saved",
   "settingsGeneral": "General",
-  "settingsWindowSection": "Window",
   "settingsDataZone": "Data zone",
   "settingsDataZoneDesc": "Clearing a persona removes its cookies and sessions. Close its window first.",
   "settingsClearAllData": "Clear all data",

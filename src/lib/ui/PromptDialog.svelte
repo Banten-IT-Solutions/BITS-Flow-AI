@@ -5,6 +5,7 @@
   import { prompts } from "../stores";
   import type { Category, Prompt } from "../types";
   import Modal from "../ui/Modal.svelte";
+  import Select from "../ui/Select.svelte";
 
   let { prompt, onclose }: { prompt: Prompt | null; onclose: () => void } = $props();
 
@@ -73,11 +74,14 @@
       </label>
       <label class="flex w-36 flex-col gap-1">
         <span class="view-desc">{m.commonCategory()}</span>
-        <select class="input" bind:value={category}>
-          {#each ["image", "video", "both"] as c (c)}
-            <option value={c}>{catLabels[c as Category]}</option>
-          {/each}
-        </select>
+        <Select
+          ariaLabel={m.commonCategory()}
+          bind:value={category}
+          options={(["image", "video", "both"] as Category[]).map((c) => ({
+            value: c,
+            label: catLabels[c],
+          }))}
+        />
       </label>
       <label class="flex h-9 items-center gap-2 pb-0.5">
         <input type="checkbox" class="size-4 accent-(--accent)" bind:checked={pinned} />
