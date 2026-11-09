@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Download, Plus, Upload } from "@lucide/svelte";
-  import { exportFile, importFile, saveAccounts, accountSchema } from "../api";
+  import { Plus } from "@lucide/svelte";
+  import { saveAccounts } from "../api";
   import { commandError } from "../errors";
   import { m } from "../paraglide/messages";
   import { accounts, recent, uiLocale } from "../stores";
@@ -11,43 +11,6 @@
   import AccountDialog from "../ui/AccountDialog.svelte";
   import ConfirmDelete from "../ui/ConfirmDelete.svelte";
   import Menu from "../ui/Menu.svelte";
-  import { mergeById, parseItems } from "../transfer";
-
-  /** Write every account to a user-picked JSON file. */
-  async function exportAccounts() {
-    try {
-      const contents = JSON.stringify(
-        { kind: "accounts", version: 1, items: get(accounts) },
-        null,
-        2,
-      );
-      const stamp = new Date().toISOString().slice(0, 10);
-      const saved = await exportFile(`bits-flow-ai-accounts-${stamp}.json`, contents);
-      if (saved) toast(m.exportDone());
-    } catch (e) {
-      toast(commandError(e));
-    }
-  }
-
-  /** Merge a user-picked accounts export into the current list by id. */
-  async function importAccounts() {
-    try {
-      const raw = await importFile();
-      if (raw === null) return;
-      const items = parseItems("accounts", accountSchema, raw);
-      if (!items) {
-        toast(m.errorInvalidFile());
-        return;
-      }
-      const prev = get(accounts);
-      const { merged, skipped } = mergeById(prev, items);
-      await saveAccounts(merged);
-      accounts.set(merged);
-      toast(m.importSummary({ imported: merged.length - prev.length, skipped }));
-    } catch (e) {
-      toast(commandError(e));
-    }
-  }
 
   let query = $state("");
   let dialogAccount = $state<Account | null>(null);
@@ -117,24 +80,6 @@
         placeholder={m.commonSearch()}
         bind:value={query}
       />
-      <button
-        type="button"
-        class="btn-icon"
-        aria-label={m.commonExport()}
-        title={m.commonExport()}
-        onclick={() => void exportAccounts()}
-      >
-        <Download class="size-4" />
-      </button>
-      <button
-        type="button"
-        class="btn-icon"
-        aria-label={m.commonImport()}
-        title={m.commonImport()}
-        onclick={() => void importAccounts()}
-      >
-        <Upload class="size-4" />
-      </button>
       <button
         class="btn-primary"
         onclick={() => {

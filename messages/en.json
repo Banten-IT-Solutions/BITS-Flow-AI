@@ -96,5 +96,6 @@
   "commonImport": "Import",
   "exportDone": "Export complete",
   "importSummary": "Imported {imported}, skipped {skipped}",
-  "errorInvalidFile": "Invalid file or not a matching export"
+  "errorInvalidFile": "Invalid file or not a matching export",
+  "settingsTransfer": "Export & Import"
 }

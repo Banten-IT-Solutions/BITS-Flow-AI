@@ -96,5 +96,6 @@
   "commonImport": "Impor",
   "exportDone": "Ekspor selesai",
   "importSummary": "{imported} diimpor, {skipped} dilewati",
-  "errorInvalidFile": "Berkas tidak valid atau bukan ekspor yang sesuai"
+  "errorInvalidFile": "Berkas tidak valid atau bukan ekspor yang sesuai",
+  "settingsTransfer": "Ekspor & Impor"
 }

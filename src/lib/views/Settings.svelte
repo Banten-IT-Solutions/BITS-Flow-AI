@@ -1,15 +1,95 @@
 <script lang="ts">
   import { Check } from "@lucide/svelte";
-  import { clearAllPersonaData, clearPersonaData, saveSettings } from "../api";
+  import {
+    clearAllPersonaData,
+    clearPersonaData,
+    exportFile,
+    importFile,
+    accountSchema,
+    promptSchema,
+    saveAccounts,
+    savePrompts,
+    saveSettings,
+  } from "../api";
   import { commandError } from "../errors";
   import { m } from "../paraglide/messages";
   import { setLocale } from "../paraglide/runtime";
-  import { applyLocale, accounts, settings, uiLocale } from "../stores";
+  import { accounts, prompts, applyLocale, settings, uiLocale } from "../stores";
   import { toast } from "../toast";
   import type { Settings } from "../types";
   import { get } from "svelte/store";
   import ConfirmDelete from "../ui/ConfirmDelete.svelte";
   import Select from "../ui/Select.svelte";
+  import { Download, Upload } from "@lucide/svelte";
+  import { mergeById, parseItems } from "../transfer";
+
+  /** Write every account to a user-picked JSON file. */
+  async function exportAccounts() {
+    try {
+      const contents = JSON.stringify(
+        { kind: "accounts", version: 1, items: get(accounts) },
+        null,
+        2,
+      );
+      const stamp = new Date().toISOString().slice(0, 10);
+      const saved = await exportFile(`bits-flow-ai-accounts-${stamp}.json`, contents);
+      if (saved) toast(m.exportDone());
+    } catch (e) {
+      toast(commandError(e));
+    }
+  }
+
+  /** Merge a user-picked accounts export into the current list by id. */
+  async function importAccounts() {
+    try {
+      const raw = await importFile();
+      if (raw === null) return;
+      const items = parseItems("accounts", accountSchema, raw);
+      if (!items) {
+        toast(m.errorInvalidFile());
+        return;
+      }
+      const prev = get(accounts);
+      const { merged, skipped } = mergeById(prev, items);
+      await saveAccounts(merged);
+      accounts.set(merged);
+      toast(m.importSummary({ imported: merged.length - prev.length, skipped }));
+    } catch (e) {
+      toast(commandError(e));
+    }
+  }
+
+  /** Write every prompt to a user-picked JSON file. */
+  async function exportPrompts() {
+    try {
+      const contents = JSON.stringify({ kind: "prompts", version: 1, items: get(prompts) }, null, 2);
+      const stamp = new Date().toISOString().slice(0, 10);
+      const saved = await exportFile(`bits-flow-ai-prompts-${stamp}.json`, contents);
+      if (saved) toast(m.exportDone());
+    } catch (e) {
+      toast(commandError(e));
+    }
+  }
+
+  /** Merge a user-picked prompts export into the current list by id. */
+  async function importPrompts() {
+    try {
+      const raw = await importFile();
+      if (raw === null) return;
+      const items = parseItems("prompts", promptSchema, raw);
+      if (!items) {
+        toast(m.errorInvalidFile());
+        return;
+      }
+      const prev = get(prompts);
+      const { merged, skipped } = mergeById(prev, items);
+      await savePrompts(merged);
+      prompts.set(merged);
+      toast(m.importSummary({ imported: merged.length - prev.length, skipped }));
+    } catch (e) {
+      toast(commandError(e));
+    }
+  }
 
   let confirmTarget = $state<{ id: string; name: string; mode: "clear" | "clearAll" } | null>(
     null,
@@ -127,6 +207,32 @@
           onchange={(e) => clampLru(e.currentTarget.valueAsNumber)}
         />
       </label>
+    </div>
+  </section>
+
+  <section class="card space-y-2">
+    <h2 class="section-title">{m.settingsTransfer()}</h2>
+    <div class="row py-1.5">
+      <span class="min-w-0 flex-1 truncate text-sm">{m.accountsTitle()}</span>
+      <button type="button" class="btn h-8 shrink-0 text-xs" onclick={() => void exportAccounts()}>
+        <Download class="size-3.5" />
+        {m.commonExport()}
+      </button>
+      <button type="button" class="btn h-8 shrink-0 text-xs" onclick={() => void importAccounts()}>
+        <Upload class="size-3.5" />
+        {m.commonImport()}
+      </button>
+    </div>
+    <div class="row py-1.5">
+      <span class="min-w-0 flex-1 truncate text-sm">{m.promptsTitle()}</span>
+      <button type="button" class="btn h-8 shrink-0 text-xs" onclick={() => void exportPrompts()}>
+        <Download class="size-3.5" />
+        {m.commonExport()}
+      </button>
+      <button type="button" class="btn h-8 shrink-0 text-xs" onclick={() => void importPrompts()}>
+        <Upload class="size-3.5" />
+        {m.commonImport()}
+      </button>
     </div>
   </section>
 
