@@ -17,6 +17,7 @@
   import { toast } from "./lib/toast";
   import { activeMenu, accounts, loadAll, providers, recent, uiLocale } from "./lib/stores";
   import type { Account, MenuId } from "./lib/types";
+  import logo from "./assets/logo.png";
   import Accounts from "./lib/views/Accounts.svelte";
   import Generate from "./lib/views/Generate.svelte";
   import Home from "./lib/views/Home.svelte";
@@ -105,7 +106,7 @@
 <div class="flex h-screen bg-bg text-fg">
   <nav class="flex w-[220px] shrink-0 flex-col border-r border-line bg-surface">
     <div class="flex h-12 items-center gap-2 border-b border-line px-4">
-      <span class="inline-block size-4 rounded-md bg-accent"></span>
+      <img src={logo} alt="" class="size-6" />
       <span class="text-sm font-semibold tracking-wide">BITS Flow AI</span>
     </div>
     <ul class="space-y-0.5 border-b border-line p-2">
