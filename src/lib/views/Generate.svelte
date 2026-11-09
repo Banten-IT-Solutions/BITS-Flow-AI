@@ -85,77 +85,83 @@
   {#if visible.length === 0}
     <EmptyState icon={Sparkles} message={m.generateEmpty()} />
   {:else}
-    <ul class="space-y-1.5">
+    <div
+      class="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-1.5"
+      role="group"
+      aria-label={m.menuProviders()}
+    >
       {#each visible as provider (provider.id)}
-        <li>
-          <div
-            class="row cursor-pointer pr-1.5 transition-colors duration-150 {selectedProviderId === provider.id
-              ? "border-accent"
-              : ""}"
-            role="button"
-            tabindex="0"
-            onclick={() => selectProvider(provider.id)}
-            onkeydown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                selectProvider(provider.id);
-              }
-            }}
-          >
-            <span class="min-w-0 flex-1 truncate text-sm">{provider.name}</span>
-            <span class="chip shrink-0">{engineLabels[provider.engine]}</span>
-            <button
-              type="button"
-              class="btn h-8"
-              disabled={!selectedAccount || launching}
-              onclick={(e) => {
-                e.stopPropagation();
-                selectProvider(provider.id);
-                void go();
-              }}
+        <button
+          type="button"
+          class="flex min-h-[76px] flex-col justify-between gap-2 rounded-md border p-3 text-left transition-colors duration-150 {selectedProviderId === provider.id
+            ? "border-accent bg-accent/10"
+            : "border-line bg-surface hover:bg-bg"}"
+          aria-pressed={selectedProviderId === provider.id}
+          onclick={() => selectProvider(provider.id)}
+        >
+          <span class="flex w-full items-center justify-between gap-2">
+            <span
+              class="flex size-7 items-center justify-center rounded-md border border-line bg-bg text-xs font-semibold {selectedProviderId === provider.id
+                ? "text-accent"
+                : "text-muted"}"
+              aria-hidden="true"
             >
-              <Play class="size-3.5" />
-              {m.commonLaunch()}
-            </button>
-          </div>
-          {#if selectedProviderId === provider.id}
-            <div class="card mt-1.5 space-y-3">
-              <div class="grid grid-cols-2 gap-3">
-                <label class="flex flex-col gap-1">
-                  <span class="view-desc">{m.menuAccounts()}</span>
-                  <Select
-                    ariaLabel={m.menuAccounts()}
-                    bind:value={selectedAccountId}
-                    options={[
-                      { value: "", label: m.commonNone(), disabled: true },
-                      ...$accounts.map((a) => ({ value: a.id, label: a.name })),
-                    ]}
-                  />
-                </label>
-                <label class="flex flex-col gap-1">
-                  <span class="view-desc">{m.menuPrompts()}</span>
-                  <Select
-                    ariaLabel={m.menuPrompts()}
-                    bind:value={selectedPromptId}
-                    options={[
-                      { value: "", label: m.commonNone() },
-                      ...sortedPrompts.map((p) => ({ value: p.id, label: p.title })),
-                    ]}
-                  />
-                </label>
-              </div>
-              <button
-                class="btn-primary h-10 px-6 text-base"
-                disabled={!selectedAccount || launching}
-                onclick={() => void go()}
-              >
-                <Play class="size-4" />
-                {selectedPrompt ? m.generateOpenCopy() : m.commonLaunch()}
-              </button>
-            </div>
-          {/if}
-        </li>
+              {provider.name.charAt(0).toUpperCase()}
+            </span>
+            <span class="chip">{engineLabels[provider.engine]}</span>
+          </span>
+          <span class="truncate text-sm font-medium">{provider.name}</span>
+        </button>
       {/each}
-    </ul>
+    </div>
+
+    {#if selectedProvider}
+      <div class="card space-y-3">
+        <div class="flex items-center gap-2">
+          <span
+            class="flex size-7 items-center justify-center rounded-md border border-line bg-bg text-xs font-semibold text-accent"
+            aria-hidden="true"
+          >
+            {selectedProvider.name.charAt(0).toUpperCase()}
+          </span>
+          <span class="text-lg font-semibold">{selectedProvider.name}</span>
+          <span class="chip">{engineLabels[selectedProvider.engine]}</span>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="flex flex-col gap-1">
+            <span class="view-desc">{m.menuAccounts()}</span>
+            <Select
+              ariaLabel={m.menuAccounts()}
+              bind:value={selectedAccountId}
+              options={[
+                { value: "", label: m.commonNone(), disabled: true },
+                ...$accounts.map((a) => ({ value: a.id, label: a.name })),
+              ]}
+            />
+          </label>
+          <label class="flex flex-col gap-1">
+            <span class="view-desc">{m.menuPrompts()}</span>
+            <Select
+              ariaLabel={m.menuPrompts()}
+              bind:value={selectedPromptId}
+              options={[
+                { value: "", label: m.commonNone() },
+                ...sortedPrompts.map((p) => ({ value: p.id, label: p.title })),
+              ]}
+            />
+          </label>
+        </div>
+        <div class="flex justify-end">
+          <button
+            class="btn-primary h-10 px-6 text-base"
+            disabled={!selectedAccount || launching}
+            onclick={() => void go()}
+          >
+            <Play class="size-4" />
+            {selectedPrompt ? m.generateOpenCopy() : m.commonLaunch()}
+          </button>
+        </div>
+      </div>
+    {/if}
   {/if}
 </div>
