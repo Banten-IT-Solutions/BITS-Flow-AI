@@ -3,6 +3,13 @@
 All notable changes to BITS Flow AI are documented here. The format follows Keep a Changelog
 and the project uses semantic versioning.
 
+## [1.2.2](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.2.1...1.2.2) (2026-11-09)
+
+
+### Bug Fixes
+
+* drop the Image + Video category from prompts ([ccff355](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/ccff3553daa2785fc5df11869ef5ee75d7ac3c07))
+
 ## [1.2.1](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.2.0...1.2.1) (2026-11-09)
 
 
