@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Persona toolbar</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0e0e10;
+        --surface: #17171a;
+        --fg: #ececee;
+        --muted: #9a9aa2;
+        --line: #26262b;
+        --accent: #2dd4bf;
+        --accent-fg: #06201d;
+        font-family: system-ui, sans-serif;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: var(--surface);
+        color: var(--fg);
+        overflow: hidden;
+      }
+      #bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 100%;
+        padding: 0 10px;
+        box-sizing: border-box;
+        border-bottom: 1px solid var(--line);
+        font-size: 12px;
+      }
+      #bar .who {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+        max-width: 26%;
+      }
+      #bar .who .tile {
+        flex: none;
+        width: 22px;
+        height: 22px;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--bg);
+        color: var(--muted);
+        font-weight: 600;
+      }
+      #bar .who .name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 600;
+      }
+      #bar select {
+        flex: 1 1 auto;
+        min-width: 0;
+        height: 26px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--bg);
+        color: var(--fg);
+        font: inherit;
+        padding: 0 6px;
+      }
+      #bar select:focus {
+        outline: 1px solid var(--accent);
+      }
+      #bar .label {
+        color: var(--muted);
+        flex: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="bar">
+      <span class="who">
+        <span class="tile" id="tile">?</span>
+        <span class="name" id="name">…</span>
+      </span>
+      <span class="label">Penyedia</span>
+      <select id="provider" aria-label="Penyedia" disabled></select>
+      <span class="label">Akun</span>
+      <select id="account" aria-label="Akun" disabled></select>
+    </div>
+    <script type="module" src="/src/toolbar.ts"></script>
+  </body>
+</html>

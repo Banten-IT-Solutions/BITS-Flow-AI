@@ -55,6 +55,8 @@ pub fn run() {
             commands::export_file,
             commands::import_file,
             persona::open_persona,
+            persona::switch_persona_provider,
+            persona::persona_state,
             persona::list_open_personas,
         ])
         .run(tauri::generate_context!())

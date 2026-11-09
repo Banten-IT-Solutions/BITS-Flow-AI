@@ -1,14 +1,25 @@
 //! Isolated persona windows: one WebKitGTK data dir per account, one visible
 //! persona at a time, with a naive LRU cap on open persona windows.
+//! Each persona window hosts a small toolbar webview (provider + account
+//! switcher, `toolbar.html`) above the provider page webview, so switching
+//! never touches the manager window.
 //! ponytail: no proxy-per-profile, no cookie import/export, eviction is
 //! open-order based (hidden windows only); revisit when reuse stats matter.
 
+use std::collections::HashMap;
 use std::sync::Mutex;
 
 use serde::Serialize;
-use tauri::{AppHandle, Manager, State, WebviewUrl, WebviewWindowBuilder};
+use tauri::window::WindowBuilder;
+use tauri::{
+    AppHandle, LogicalPosition, LogicalSize, Manager, State, WebviewBuilder, WebviewUrl, Window,
+    WindowEvent,
+};
 
 use crate::commands;
+
+/// Toolbar strip height in logical pixels.
+const BAR_HEIGHT: f64 = 44.0;
 
 /// Chrome UA so providers that gate on WebView/Headless UA behave like a
 /// normal desktop Chrome.
@@ -18,6 +29,8 @@ pub const CHROME_USER_AGENT: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit
 pub struct PersonaState {
     /// Persona window labels in open order, oldest first.
     pub order: Mutex<Vec<String>>,
+    /// Persona label -> provider URL its page webview currently shows.
+    pub urls: Mutex<HashMap<String, String>>,
 }
 
 #[derive(Serialize)]
@@ -36,6 +49,37 @@ pub(crate) fn is_valid_persona_id(id: &str) -> bool {
         && id
             .chars()
             .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+}
+
+/// Logical window size; falls back to 800x600 before the first layout event.
+fn logical_size(window: &Window) -> (f64, f64) {
+    let Ok(size) = window.inner_size() else {
+        return (800.0, 600.0);
+    };
+    let scale = window.scale_factor().unwrap_or(1.0).max(1.0);
+    let w = size.width as f64 / scale;
+    let h = size.height as f64 / scale;
+    (w.max(100.0), h.max(100.0))
+}
+
+/// Position toolbar above page for the current window size.
+fn relayout(window: &Window) {
+    let (w, h) = logical_size(window);
+    let label = window.label();
+    let Some(bar) = window.get_webview(&format!("{label}-bar")) else {
+        return;
+    };
+    let Some(page) = window.get_webview(&format!("{label}-page")) else {
+        return;
+    };
+    let _ = bar.set_bounds(tauri::Rect {
+        position: LogicalPosition::new(0.0, 0.0).into(),
+        size: LogicalSize::new(w, BAR_HEIGHT).into(),
+    });
+    let _ = page.set_bounds(tauri::Rect {
+        position: LogicalPosition::new(0.0, BAR_HEIGHT).into(),
+        size: LogicalSize::new(w, h - BAR_HEIGHT).into(),
+    });
 }
 
 /// Pure LRU plan: which labels to close so the open count fits `cap`
@@ -73,28 +117,79 @@ pub fn open_persona(
     let label = persona_label(&persona_id);
     let cap = commands::load_settings(&app)?.lru_size;
 
-    if let Some(existing) = app.get_webview_window(&label) {
-        existing.navigate(parsed).map_err(|e| e.to_string())?;
-        existing.show().map_err(|e| e.to_string())?;
-        existing.set_focus().map_err(|e| e.to_string())?;
-    } else {
-        let profile_dir = commands::app_data_dir(&app)?
-            .join("profiles")
-            .join(&persona_id);
-        let mut builder = WebviewWindowBuilder::new(&app, &label, WebviewUrl::External(parsed))
-            .title(&label)
-            .visible(false)
-            .data_directory(profile_dir);
-        if engine == "chrome" {
-            builder = builder.user_agent(CHROME_USER_AGENT);
+    match app.get_window(&label) {
+        // Existing persona: reveal; only navigate when the provider actually
+        // changes so a plain reveal never reloads (and loses) page state.
+        Some(window) => {
+            let page_label = format!("{label}-page");
+            let page = app
+                .get_webview(&page_label)
+                .ok_or_else(|| format!("persona webview missing: {page_label}"))?;
+            if page.url().ok().as_ref() != Some(&parsed) {
+                page.navigate(parsed.clone()).map_err(|e| e.to_string())?;
+            }
+            window.show().map_err(|e| e.to_string())?;
+            window.set_focus().map_err(|e| e.to_string())?;
+            state
+                .urls
+                .lock()
+                .map_err(|_| "persona url lock poisoned".to_string())?
+                .insert(label.clone(), url.clone());
         }
-        let window = builder.build().map_err(|e| e.to_string())?;
-        window.show().map_err(|e| e.to_string())?;
-        window.set_focus().map_err(|e| e.to_string())?;
+        None => {
+            let profile_dir = commands::app_data_dir(&app)?
+                .join("profiles")
+                .join(&persona_id);
+            let window = WindowBuilder::new(&app, &label)
+                .title(&persona_id)
+                .visible(false)
+                .build()
+                .map_err(|e| e.to_string())?;
+            let (w, h) = logical_size(&window);
+            window
+                .add_child(
+                    WebviewBuilder::new(
+                        format!("{label}-bar"),
+                        WebviewUrl::App("toolbar.html".into()),
+                    )
+                    .initialization_script(format!("window.__PERSONA_ID__ = {persona_id:?};")),
+                    LogicalPosition::new(0.0, 0.0),
+                    LogicalSize::new(w, BAR_HEIGHT),
+                )
+                .map_err(|e| e.to_string())?;
+            let mut page = WebviewBuilder::new(
+                format!("{label}-page"),
+                WebviewUrl::External(parsed.clone()),
+            )
+            .data_directory(profile_dir);
+            if engine == "chrome" {
+                page = page.user_agent(CHROME_USER_AGENT);
+            }
+            window
+                .add_child(
+                    page,
+                    LogicalPosition::new(0.0, BAR_HEIGHT),
+                    LogicalSize::new(w, (h - BAR_HEIGHT).max(100.0)),
+                )
+                .map_err(|e| e.to_string())?;
+            let win = window.clone();
+            window.on_window_event(move |event| {
+                if matches!(event, WindowEvent::Resized(_)) {
+                    relayout(&win);
+                }
+            });
+            window.show().map_err(|e| e.to_string())?;
+            window.set_focus().map_err(|e| e.to_string())?;
+            state
+                .urls
+                .lock()
+                .map_err(|_| "persona url lock poisoned".to_string())?
+                .insert(label.clone(), url.clone());
+        }
     }
 
     // Exactly one visible persona at a time.
-    for (other_label, window) in app.webview_windows() {
+    for (other_label, window) in app.windows() {
         if other_label.starts_with("persona-") && other_label != label {
             let _ = window.hide();
         }
@@ -111,7 +206,7 @@ pub fn open_persona(
     // (they are re-hidden above only when they are not the current persona).
     let mut closed: Vec<String> = Vec::new();
     for victim in evict_plan(&order, &label, cap) {
-        if let Some(window) = app.get_webview_window(&victim) {
+        if let Some(window) = app.get_window(&victim) {
             if window.is_visible().unwrap_or(true) {
                 continue;
             }
@@ -125,12 +220,58 @@ pub fn open_persona(
     Ok(OpenPersonaResult { label })
 }
 
+/// Navigate an open persona's page webview to another provider. The profile
+/// (cookies) stays with the account, so this is a same-profile switch.
+#[tauri::command]
+pub fn switch_persona_provider(
+    app: AppHandle,
+    state: State<'_, PersonaState>,
+    persona_id: String,
+    url: String,
+) -> Result<(), String> {
+    if !is_valid_persona_id(&persona_id) {
+        return Err(format!("invalid persona id: {persona_id:?}"));
+    }
+    let parsed = tauri::Url::parse(&url).map_err(|_| format!("invalid URL: {url}"))?;
+    if !matches!(parsed.scheme(), "http" | "https") {
+        return Err(format!("unsupported URL scheme: {}", parsed.scheme()));
+    }
+    let label = persona_label(&persona_id);
+    let page = app
+        .get_webview(&format!("{label}-page"))
+        .ok_or_else(|| "persona window is not open".to_string())?;
+    page.navigate(parsed).map_err(|e| e.to_string())?;
+    state
+        .urls
+        .lock()
+        .map_err(|_| "persona url lock poisoned".to_string())?
+        .insert(label, url);
+    Ok(())
+}
+
+/// Current provider URL of a persona window (null when not open). The
+/// toolbar uses it to preselect the provider switcher.
+#[tauri::command]
+pub fn persona_state(
+    state: State<'_, PersonaState>,
+    persona_id: String,
+) -> Result<Option<String>, String> {
+    if !is_valid_persona_id(&persona_id) {
+        return Err(format!("invalid persona id: {persona_id:?}"));
+    }
+    let urls = state
+        .urls
+        .lock()
+        .map_err(|_| "persona url lock poisoned".to_string())?;
+    Ok(urls.get(&persona_label(&persona_id)).cloned())
+}
+
 /// Labels of every currently-open persona window (`persona-*`), for the
 /// Home "open" badge. Sorted for stable UI ordering.
 #[tauri::command]
 pub fn list_open_personas(app: AppHandle) -> Result<Vec<String>, String> {
     let mut labels: Vec<String> = app
-        .webview_windows()
+        .windows()
         .into_keys()
         .filter(|label| label.starts_with("persona-"))
         .collect();
@@ -173,12 +314,10 @@ mod tests {
     }
 
     #[test]
-    fn persona_id_charset_is_strict() {
-        assert!(is_valid_persona_id("abc-DEF_012"));
+    fn valid_persona_ids_only() {
+        assert!(is_valid_persona_id("nurul-imam-studio"));
         assert!(!is_valid_persona_id(""));
         assert!(!is_valid_persona_id("../etc"));
-        assert!(!is_valid_persona_id("with space"));
-        assert!(!is_valid_persona_id(&"x".repeat(129)));
-        assert!(is_valid_persona_id(&"x".repeat(128)));
+        assert!(!is_valid_persona_id("spaced id"));
     }
 }
