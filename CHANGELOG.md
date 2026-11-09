@@ -3,6 +3,13 @@
 All notable changes to BITS Flow AI are documented here. The format follows Keep a Changelog
 and the project uses semantic versioning.
 
+## [1.0.2](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.0.1...1.0.2) (2026-11-09)
+
+
+### Bug Fixes
+
+* **ci:** run cargo steps from src-tauri working directory ([5f86c93](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/5f86c9321c3b89fd05fb6ad9579f11350800878f))
+
 ## [1.0.1](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.0.0...1.0.1) (2026-11-09)
 
 
