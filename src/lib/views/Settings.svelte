@@ -1,18 +1,14 @@
 <script lang="ts">
-  import { Check, Copy } from "@lucide/svelte";
-  import { clearAllPersonaData, clearPersonaData, saveProviders, saveSettings } from "../api";
-  import { copyText } from "../clipboard";
+  import { Check } from "@lucide/svelte";
+  import { clearAllPersonaData, clearPersonaData, saveSettings } from "../api";
   import { commandError } from "../errors";
   import { m } from "../paraglide/messages";
   import { setLocale } from "../paraglide/runtime";
-  import { activeMenu, applyLocale, accounts, providers, settings, uiLocale } from "../stores";
+  import { applyLocale, accounts, settings, uiLocale } from "../stores";
   import { toast } from "../toast";
-  import { REPO_URL, type Settings } from "../types";
+  import type { Settings } from "../types";
   import { get } from "svelte/store";
   import ConfirmDelete from "../ui/ConfirmDelete.svelte";
-
-  const engineOptions = ["webview", "chrome"] as const;
-  const engineLabels = $derived({ webview: m.engineWebview(), chrome: m.engineChrome() });
 
   let confirmTarget = $state<{ id: string; name: string; mode: "clear" | "clearAll" } | null>(
     null,
@@ -43,16 +39,6 @@
         await setLocale(locale, { reload: false });
         uiLocale.set(locale);
       }
-      toast(commandError(e));
-    }
-  }
-
-  async function setEngine(providerId: string, engine: "webview" | "chrome") {
-    const next = $providers.map((p) => (p.id === providerId ? { ...p, engine } : p));
-    try {
-      await saveProviders(next);
-      providers.set(next);
-    } catch (e) {
       toast(commandError(e));
     }
   }
@@ -148,32 +134,6 @@
     </div>
   </section>
 
-  <section class="card space-y-2">
-    <div class="flex items-center justify-between gap-2">
-      <h2 class="section-title">{m.settingsEnginePerProvider()}</h2>
-      <button class="btn h-8 text-xs" onclick={() => activeMenu.set("providers")}>
-        {m.settingsEditInProviders()}
-      </button>
-    </div>
-    <ul class="space-y-1.5">
-      {#each $providers as provider (provider.id)}
-        <li class="row py-1.5">
-          <span class="min-w-0 flex-1 truncate text-sm">{provider.name}</span>
-          <span class="text-xs text-muted">{engineLabels[provider.engine]}</span>
-          <select
-            class="input w-40"
-            value={provider.engine}
-            onchange={(e) => void setEngine(provider.id, e.currentTarget.value as "webview" | "chrome")}
-          >
-            {#each engineOptions as option (option)}
-              <option value={option}>{engineLabels[option]}</option>
-            {/each}
-          </select>
-        </li>
-      {/each}
-    </ul>
-  </section>
-
   <section class="card space-y-3 border-danger">
     <h2 class="section-title text-danger">{m.settingsDataZone()}</h2>
     <p class="view-desc">{m.settingsDataZoneDesc()}</p>
@@ -208,28 +168,6 @@
       >
         {m.settingsClearAllData()}
       </button>
-    </div>
-  </section>
-
-  <section class="card space-y-2">
-    <h2 class="section-title">{m.settingsAbout()}</h2>
-    <div class="flex items-center justify-between gap-2">
-      <span class="text-sm">{m.settingsVersion()}</span>
-      <span class="font-mono text-xs text-muted">{__APP_VERSION__}</span>
-    </div>
-    <div class="flex items-center justify-between gap-2">
-      <span class="text-sm">{m.settingsRepository()}</span>
-      <span class="flex items-center gap-1">
-        <span class="font-mono text-xs text-muted">{REPO_URL}</span>
-        <button
-          type="button"
-          class="btn-icon"
-          aria-label={m.commonCopy()}
-          onclick={() => void copyText(REPO_URL).then(() => toast(m.commonCopied()))}
-        >
-          <Copy class="size-4" />
-        </button>
-      </span>
     </div>
   </section>
 </div>
