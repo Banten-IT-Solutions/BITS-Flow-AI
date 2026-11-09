@@ -219,6 +219,13 @@ fn default_providers() -> Vec<Provider> {
             Category::Both,
         ),
         provider("chatgpt", "ChatGPT", "https://chatgpt.com", Category::Image),
+        provider("dola", "Dola", "https://www.dola.com", Category::Both),
+        provider(
+            "dreamina",
+            "Dreamina",
+            "https://dreamina.capcut.com",
+            Category::Both,
+        ),
     ]
 }
 
