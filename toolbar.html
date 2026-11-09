@@ -26,33 +26,25 @@
       }
       #bar {
         display: flex;
-        align-items: center;
-        gap: 6px;
+        align-items: stretch;
+        gap: 4px;
         height: 100%;
-        padding: 0 8px;
+        padding: 0 4px;
         box-sizing: border-box;
         border-bottom: 1px solid var(--line);
-        font-size: 12px;
+        font-size: 10px;
+        line-height: 1;
+        overflow: hidden;
       }
       #bar .who {
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 3px;
         min-width: 0;
-        max-width: 26%;
+        max-width: 22%;
       }
       #bar .who .tile {
-        flex: none;
-        width: 20px;
-        height: 20px;
-        display: grid;
-        place-items: center;
-        border: 1px solid var(--line);
-        border-radius: 5px;
-        background: var(--bg);
-        color: var(--muted);
-        font-size: 11px;
-        font-weight: 600;
+        display: none;
       }
       #bar .who .name {
         overflow: hidden;
@@ -63,13 +55,13 @@
       #bar select {
         flex: 1 1 auto;
         min-width: 0;
-        height: 22px;
-        border: 1px solid var(--line);
-        border-radius: 5px;
+        height: 100%;
+        border: none;
+        border-radius: 0;
         background: var(--bg);
         color: var(--fg);
         font: inherit;
-        padding: 0 4px;
+        padding: 0 2px;
       }
       #bar select:focus {
         outline: 1px solid var(--accent);
@@ -77,6 +69,7 @@
       #bar .label {
         color: var(--muted);
         flex: none;
+        display: none;
       }
     </style>
   </head>

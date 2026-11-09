@@ -18,8 +18,8 @@ use tauri::{
 
 use crate::commands;
 
-/// Toolbar strip height in logical pixels — one compact row.
-const BAR_HEIGHT: f64 = 32.0;
+/// Toolbar strip height in logical pixels — one micro row.
+const BAR_HEIGHT: f64 = 10.0;
 
 /// Chrome UA so providers that gate on WebView/Headless UA behave like a
 /// normal desktop Chrome.
