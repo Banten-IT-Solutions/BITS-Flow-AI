@@ -64,13 +64,13 @@
     <p class="view-desc">{m.generateDescription()}</p>
   </div>
 
-  <div class="inline-flex w-fit rounded-md border border-line bg-surface p-0.5">
+  <div class="flex w-fit gap-1.5">
     {#each [["image", m.generateImage()], ["video", m.generateVideo()]] as [id, label] (id)}
       <button
         type="button"
-        class="h-8 rounded-sm px-4 text-sm transition-colors duration-150 {tab === id
-          ? "bg-accent font-medium text-accent-fg"
-          : "text-muted hover:bg-bg hover:text-fg"}"
+        class="h-7 rounded-md border px-2.5 text-xs transition-colors duration-150 {tab === id
+          ? "border-accent bg-accent font-medium text-accent-fg"
+          : "border-line bg-surface text-muted hover:bg-bg hover:text-fg"}"
         aria-pressed={tab === id}
         onclick={() => {
           tab = id as "image" | "video";
