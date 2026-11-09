@@ -3,6 +3,13 @@
 All notable changes to BITS Flow AI are documented here. The format follows Keep a Changelog
 and the project uses semantic versioning.
 
+## [1.5.4](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.5.3...1.5.4) (2026-11-09)
+
+
+### Bug Fixes
+
+* distinguish polkit rejection from dpkg failure in updates ([0f8978b](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/0f8978bc42be665814c4013099fe817406143045))
+
 ## [1.5.3](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.5.2...1.5.3) (2026-11-09)
 
 
