@@ -3,6 +3,14 @@
 All notable changes to BITS Flow AI are documented here. The format follows Keep a Changelog
 and the project uses semantic versioning.
 
+## [1.1.2](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.1.1...1.1.2) (2026-11-09)
+
+
+### Bug Fixes
+
+* wrap env::set_var in unsafe (required in edition 2024) ([a6e9784](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/a6e97840ece3730ac46ac2d61256c7197b0a3b21))
+* wrap env::set_var in unsafe (required in edition 2024); sync Cargo.lock ([a940e29](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/a940e29653018fb177c171b6788909081e98aec3))
+
 ## [1.1.1](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.1.0...1.1.1) (2026-11-09)
 
 
