@@ -205,7 +205,6 @@ fn default_providers() -> Vec<Provider> {
             "https://gemini.google.com",
             Category::Image,
         ),
-        provider("suno", "Suno", "https://suno.com", Category::Both),
         provider(
             "pixverse",
             "PixVerse",
@@ -224,6 +223,18 @@ fn default_providers() -> Vec<Provider> {
             "ImagineArt",
             "https://www.imagine.art",
             Category::Both,
+        ),
+        provider(
+            "dreamina",
+            "Dreamina",
+            "https://dreamina.capcut.com",
+            Category::Both,
+        ),
+        provider(
+            "bing",
+            "Bing Image Creator",
+            "https://www.bing.com/images/create/ai-image-generator",
+            Category::Image,
         ),
     ]
 }
@@ -272,10 +283,15 @@ pub fn list_providers(app: AppHandle) -> Result<Vec<Provider>, String> {
 /// Built-in providers are app-owned (name/URL locked in the UI), so every
 /// load refreshes their URLs to the current defaults — upstream moves such
 /// as Flow migrating to flow.google.com reach existing installs — and
-/// appends builtins missing from older saves. Custom providers are never
+/// appends builtins missing from older saves. Builtin providers that no
+/// longer ship are removed on the same pass. Custom providers are never
 /// touched.
 fn sync_builtins(saved: &mut Vec<Provider>) {
-    for default in default_providers() {
+    let defaults = default_providers();
+    // Builtin set is app-owned: dropped builtins disappear too, while custom
+    // providers (and builtins the user re-added as custom) are kept.
+    saved.retain(|p| p.custom || defaults.iter().any(|d| d.id == p.id));
+    for default in defaults {
         match saved.iter_mut().find(|p| p.id == default.id) {
             Some(provider) if !provider.custom => provider.url = default.url,
             None => saved.push(default),
@@ -551,6 +567,29 @@ mod tests {
         assert_eq!(saved[0].url, "https://example.com");
         assert_eq!(saved[0].name, "Flow saya");
         assert!(saved.iter().any(|p| p.id == "gemini"));
+    }
+
+    #[test]
+    fn builtin_sync_drops_removed_builtins_but_keeps_custom_ones() {
+        let mut saved = default_providers();
+        saved.retain(|p| p.id != "dreamina");
+        sync_builtins(&mut saved);
+        assert!(saved.iter().any(|p| p.id == "dreamina"));
+
+        let mut retired = vec![provider("suno", "Suno", "https://suno.com", Category::Both)];
+        sync_builtins(&mut retired);
+        assert!(!retired.iter().any(|p| p.id == "suno"));
+        assert!(retired.iter().any(|p| p.id == "gemini"));
+
+        let mut custom_suno = vec![provider(
+            "suno",
+            "Suno saya",
+            "https://example.com",
+            Category::Both,
+        )];
+        custom_suno[0].custom = true;
+        sync_builtins(&mut custom_suno);
+        assert!(custom_suno.iter().any(|p| p.id == "suno" && p.custom));
     }
 
     #[test]
