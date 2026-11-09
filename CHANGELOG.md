@@ -3,6 +3,13 @@
 All notable changes to BITS Flow AI are documented here. The format follows Keep a Changelog
 and the project uses semantic versioning.
 
+## [1.1.7](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.1.6...1.1.7) (2026-11-09)
+
+
+### Bug Fixes
+
+* remove system and light themes; use dark-only UI ([4da7871](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/4da78718c4f99cf8a0bc9d23e2a3cf0c153ff198))
+
 ## [1.1.6](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.1.5...1.1.6) (2026-11-09)
 
 
