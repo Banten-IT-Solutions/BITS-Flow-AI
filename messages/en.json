@@ -42,6 +42,7 @@
   "engineWebview": "System webview",
   "engineChrome": "Chrome UA",
   "homeTitle": "Home",
+  "homeDescription": "Your personas and the fastest way to open a provider.",
   "homeQuickLaunch": "Quick launch",
   "homeQuickLaunchHint": "Pick a provider and an account, then open the isolated browser for that combination.",
   "homePersonas": "Personas",

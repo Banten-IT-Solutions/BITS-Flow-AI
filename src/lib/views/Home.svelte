@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { Clapperboard, Clock, Globe, Image as ImageIcon, Layers, Play } from "@lucide/svelte";
+  import { Clapperboard, Clock, Globe, Image as ImageIcon, Layers, Play, Plus, Users } from "@lucide/svelte";
   import { clearPersonaData, saveAccounts } from "../api";
   import { commandError } from "../errors";
-  import { lastUsedProvider, launchPersona, refreshOpenPersonas } from "../launch";
+  import { lastUsedProvider, launchPersona, refreshOpenPersonas } from "./../launch";
   import { m } from "../paraglide/messages";
-  import { accounts, openLabels, providers, recent, uiLocale } from "../stores";
+  import { accounts, activeMenu, openLabels, providers, recent, uiLocale } from "../stores";
   import { toast } from "../toast";
   import { formatRelative } from "../time";
   import type { Account } from "../types";
@@ -151,14 +151,17 @@
 <svelte:window onkeydown={onkeydown} />
 
 <div class="view">
-  <h1 class="view-title">{m.homeTitle()}</h1>
+  <div class="space-y-1">
+    <h1 class="view-title">{m.homeTitle()}</h1>
+    <p class="view-desc">{m.homeDescription()}</p>
+  </div>
 
   <section class="card space-y-3">
     <h2 class="section-title">{m.homeQuickLaunch()}</h2>
     <p class="view-desc">{m.homeQuickLaunchHint()}</p>
     <div class="flex flex-wrap items-end gap-3">
       <label class="flex w-60 flex-col gap-1">
-        <span class="view-desc">{m.menuProviders()}</span>
+        <span class="text-sm font-medium">{m.menuProviders()}</span>
         <Select
           ariaLabel={m.menuProviders()}
           bind:value={selectedProvider}
@@ -169,7 +172,7 @@
         />
       </label>
       <label class="flex w-60 flex-col gap-1">
-        <span class="view-desc">{m.menuAccounts()}</span>
+        <span class="text-sm font-medium">{m.menuAccounts()}</span>
         <Select
           ariaLabel={m.menuAccounts()}
           bind:value={selectedAccount}
@@ -180,7 +183,7 @@
         />
       </label>
       <button
-        class="btn-primary h-10 px-6 text-base"
+        class="btn-primary h-10 px-6"
         disabled={!selectedProvider || !selectedAccount || launching}
         onclick={() => void launch(selectedProvider, selectedAccount)}
       >
@@ -193,21 +196,30 @@
   <section class="space-y-2">
     <h2 class="section-title">{m.homePersonas()}</h2>
     {#if $accounts.length === 0}
-      <p class="view-desc">{m.homeNoPersonas()}</p>
+      <EmptyState icon={Users} message={m.homeNoPersonas()}>
+        <button class="btn-primary" onclick={() => activeMenu.set("accounts")}>
+          <Plus class="size-4" />
+          {m.commonAdd()}
+        </button>
+      </EmptyState>
     {:else}
       <div class="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3">
         {#each $accounts as account (account.id)}
           {@const isOpen = $openLabels.includes(`persona-${account.id}`)}
-          <div class="flex items-center gap-2 rounded-md border border-line bg-surface px-3 py-2.5">
+          <div
+            class="flex items-center gap-3 rounded-md border border-line bg-surface px-3 py-2.5 transition-colors duration-150 hover:bg-bg"
+          >
             <button
               type="button"
               class="flex min-w-0 flex-1 items-center gap-3 rounded-md text-left transition-colors duration-150"
               onclick={() => void openWithLast(account)}
             >
               <span
-                class="size-3 shrink-0 rounded-full border border-line"
-                style:background={account.color ?? "var(--fg-muted)"}
-              ></span>
+                class="flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white"
+                style:background={account.color ?? "var(--line)"}
+              >
+                {account.name.charAt(0).toUpperCase()}
+              </span>
               <span class="min-w-0">
                 <span class="block truncate text-sm font-medium">{account.name}</span>
                 <span class="block truncate text-xs text-muted">{account.email}</span>

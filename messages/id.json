@@ -42,6 +42,7 @@
   "engineWebview": "Webview sistem",
   "engineChrome": "UA Chrome",
   "homeTitle": "Beranda",
+  "homeDescription": "Personamu dan cara tercepat membuka penyedia AI.",
   "homeQuickLaunch": "Buka cepat",
   "homeQuickLaunchHint": "Pilih penyedia dan akun, lalu buka browser terisolasi untuk kombinasi tersebut.",
   "homePersonas": "Persona",
