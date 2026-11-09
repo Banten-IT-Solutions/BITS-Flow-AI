@@ -236,6 +236,13 @@ fn default_providers() -> Vec<Provider> {
             "https://www.bing.com/images/create/ai-image-generator",
             Category::Image,
         ),
+        provider(
+            "firefly",
+            "Adobe Firefly",
+            "https://firefly.adobe.com",
+            Category::Both,
+        ),
+        provider("chatgpt", "ChatGPT", "https://chatgpt.com", Category::Image),
     ]
 }
 
