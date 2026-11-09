@@ -184,24 +184,21 @@ pub fn load_settings(app: &AppHandle) -> Result<Settings, String> {
     Ok(read_json::<Settings>(&path)?.normalized())
 }
 
-fn default_providers() -> Vec<Provider> {
-    fn provider(id: &str, name: &str, url: &str, category: Category) -> Provider {
-        Provider {
-            id: id.to_string(),
-            name: name.to_string(),
-            url: url.to_string(),
-            category,
-            engine: Engine::Webview,
-            custom: false,
-        }
+/// One built-in provider entry; `custom` is always false.
+fn provider(id: &str, name: &str, url: &str, category: Category) -> Provider {
+    Provider {
+        id: id.to_string(),
+        name: name.to_string(),
+        url: url.to_string(),
+        category,
+        engine: Engine::Webview,
+        custom: false,
     }
+}
+
+fn default_providers() -> Vec<Provider> {
     vec![
-        provider(
-            "flow",
-            "Flow",
-            "https://labs.google/fx/tools/flow",
-            Category::Both,
-        ),
+        provider("flow", "Flow", "https://flow.google.com", Category::Both),
         provider(
             "gemini",
             "Gemini",
@@ -225,7 +222,7 @@ fn default_providers() -> Vec<Provider> {
         provider(
             "imagineart",
             "ImagineArt",
-            "https://imagine.art",
+            "https://www.imagine.art",
             Category::Both,
         ),
     ]
@@ -267,7 +264,24 @@ pub fn list_providers(app: AppHandle) -> Result<Vec<Provider>, String> {
         write_json(&path, &seeded)?;
         return Ok(seeded);
     }
-    read_json(&path)
+    let mut saved: Vec<Provider> = read_json(&path)?;
+    sync_builtins(&mut saved);
+    Ok(saved)
+}
+
+/// Built-in providers are app-owned (name/URL locked in the UI), so every
+/// load refreshes their URLs to the current defaults — upstream moves such
+/// as Flow migrating to flow.google.com reach existing installs — and
+/// appends builtins missing from older saves. Custom providers are never
+/// touched.
+fn sync_builtins(saved: &mut Vec<Provider>) {
+    for default in default_providers() {
+        match saved.iter_mut().find(|p| p.id == default.id) {
+            Some(provider) if !provider.custom => provider.url = default.url,
+            None => saved.push(default),
+            _ => {}
+        }
+    }
 }
 
 fn validate_provider(provider: &Provider) -> Result<(), String> {
@@ -506,6 +520,37 @@ mod tests {
         assert_eq!(settings.language, LanguageSetting::En);
         assert_eq!(settings.close_behavior, CloseBehavior::Hide);
         assert_eq!(settings.lru_size, 5);
+    }
+
+    #[test]
+    fn builtin_sync_refreshes_locked_urls_and_appends_missing() {
+        let mut saved = vec![provider(
+            "flow",
+            "Flow",
+            "https://labs.google/fx/tools/flow",
+            Category::Both,
+        )];
+        sync_builtins(&mut saved);
+        assert_eq!(
+            saved.iter().find(|p| p.id == "flow").unwrap().url,
+            "https://flow.google.com"
+        );
+        assert!(saved.iter().any(|p| p.id == "gemini"));
+    }
+
+    #[test]
+    fn builtin_sync_leaves_custom_providers_alone() {
+        let mut saved = vec![provider(
+            "flow",
+            "Flow saya",
+            "https://example.com",
+            Category::Both,
+        )];
+        saved[0].custom = true;
+        sync_builtins(&mut saved);
+        assert_eq!(saved[0].url, "https://example.com");
+        assert_eq!(saved[0].name, "Flow saya");
+        assert!(saved.iter().any(|p| p.id == "gemini"));
     }
 
     #[test]
