@@ -42,7 +42,7 @@
     const q = query.trim().toLowerCase();
     return $providers.filter(
       (p) =>
-        (filter === "all" || p.category === filter) &&
+        (filter === "all" || p.category === filter || p.category === "both") &&
         (!q || p.name.toLowerCase().includes(q) || p.url.toLowerCase().includes(q)),
     );
   });
@@ -152,11 +152,11 @@
           >
             {tileLetter(provider)}
           </span>
-          <span class="min-w-0 flex-1 truncate text-sm">
+          <span class="w-[30%] shrink-0 truncate text-sm">
             {provider.name}
             {#if !provider.custom}<Lock class="ml-1 inline size-3 align-[-2px] text-muted" />{/if}
           </span>
-          <span class="min-w-0 flex-[2] truncate text-xs text-muted">{provider.url}</span>
+          <span class="min-w-0 flex-1 truncate text-xs text-muted">{provider.url}</span>
           <span class="chip shrink-0">{categoryLabel(provider.category, catLabels)}</span>
           <span class="chip shrink-0">{engineLabels[provider.engine]}</span>
           <Menu
