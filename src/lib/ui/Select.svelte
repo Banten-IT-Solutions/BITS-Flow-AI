@@ -11,9 +11,19 @@
     id?: string;
     /** Compact height/type for dense card layouts. */
     compact?: boolean;
+    /** Extra classes for the root wrapper (layout hooks like flex sizing). */
+    class?: string;
   };
 
-  let { options, ariaLabel, value = $bindable(""), onchange, id, compact = false }: Props = $props();
+  let {
+    options,
+    ariaLabel,
+    value = $bindable(""),
+    onchange,
+    id,
+    compact = false,
+    class: className = "",
+  }: Props = $props();
 
   let open = $state(false);
   let active = $state(0);
@@ -71,7 +81,7 @@
 <!-- ponytail: no type-ahead search in the popup; add only if lists grow past ~30 items. -->
 <svelte:window onclick={onoutside} />
 
-<div class="relative" bind:this={root}>
+<div class="relative {className}" bind:this={root}>
   <button
     {id}
     type="button"

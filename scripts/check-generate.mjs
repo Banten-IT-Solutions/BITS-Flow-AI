@@ -21,7 +21,13 @@ const data = (n) => JSON.parse(readFileSync(`${fixture}/${n}.json`, "utf8"));
 const server = spawn("python3", ["-m", "http.server", String(port), "--directory", `${root}dist`], {
   stdio: "ignore",
 });
-await new Promise((r) => setTimeout(r, 1000));
+// Wait until the server answers; a blind sleep races slow starts.
+for (let up = false; !up; ) {
+  await new Promise((r) => setTimeout(r, 200));
+  up = await fetch(`http://localhost:${port}/`)
+    .then((r) => r.ok)
+    .catch(() => false);
+}
 
 const browser = await puppeteer.launch({
   executablePath: process.env.CHROME ?? "/usr/bin/google-chrome",

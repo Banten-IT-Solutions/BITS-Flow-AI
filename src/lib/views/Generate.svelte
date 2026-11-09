@@ -3,9 +3,8 @@
   import { commandError } from "../errors";
   import { launchPersona } from "../launch";
   import { m } from "../paraglide/messages";
-  import { copyText } from "../clipboard";
   import { filterProviders } from "../settings";
-  import { accounts, prompts, providers } from "../stores";
+  import { accounts, providers } from "../stores";
   import { toast } from "../toast";
   import EmptyState from "../ui/EmptyState.svelte";
   import Select from "../ui/Select.svelte";
@@ -13,26 +12,17 @@
   let tab = $state<"image" | "video">("image");
   let launching = $state(false);
   let accountByProvider = $state<Record<string, string>>({});
-  let promptByProvider = $state<Record<string, string>>({});
 
   const engineLabels = $derived({ webview: m.engineWebview(), chrome: m.engineChrome() });
   const visible = $derived(filterProviders($providers, tab));
 
-  // Pinned prompts first.
-  const sortedPrompts = $derived([...$prompts].sort((a, b) => Number(b.pinned) - Number(a.pinned)));
-
   async function go(providerId: string) {
     const provider = $providers.find((p) => p.id === providerId);
     const account = $accounts.find((a) => a.id === accountByProvider[providerId]);
-    const prompt = $prompts.find((p) => p.id === promptByProvider[providerId]);
     if (!provider || !account || launching) return;
     launching = true;
     try {
       await launchPersona(account, provider);
-      if (prompt) {
-        await copyText(prompt.body);
-        toast(m.generatePromptCopied());
-      }
     } catch (e) {
       toast(commandError(e));
     } finally {
@@ -84,37 +74,29 @@
             <span class="min-w-0 flex-1 truncate text-sm font-medium">{provider.name}</span>
             <span class="chip">{engineLabels[provider.engine]}</span>
           </div>
-          <Select
-            compact
-            ariaLabel={`${m.menuAccounts()} — ${provider.name}`}
-            value={accountByProvider[provider.id] ?? ""}
-            onchange={(v) => (accountByProvider[provider.id] = v)}
-            options={[
-              { value: "", label: m.commonNone(), disabled: true },
-              ...$accounts.map((a) => ({ value: a.id, label: a.name })),
-            ]}
-          />
-          {#if sortedPrompts.length > 0}
+          <div class="flex items-center gap-1.5">
             <Select
               compact
-              ariaLabel={`${m.menuPrompts()} — ${provider.name}`}
-              value={promptByProvider[provider.id] ?? ""}
-              onchange={(v) => (promptByProvider[provider.id] = v)}
+              class="min-w-0 flex-1"
+              ariaLabel={`${m.menuAccounts()} — ${provider.name}`}
+              value={accountByProvider[provider.id] ?? ""}
+              onchange={(v) => (accountByProvider[provider.id] = v)}
               options={[
-                { value: "", label: m.commonNone() },
-                ...sortedPrompts.map((p) => ({ value: p.id, label: p.title })),
+                { value: "", label: m.commonNone(), disabled: true },
+                ...$accounts.map((a) => ({ value: a.id, label: a.name })),
               ]}
             />
-          {/if}
-          <button
-            type="button"
-            class="btn-primary h-8 w-full justify-center"
-            disabled={!accountByProvider[provider.id] || launching}
-            onclick={() => void go(provider.id)}
-          >
-            <Play class="size-3.5" />
-            {promptByProvider[provider.id] ? m.generateOpenCopy() : m.commonLaunch()}
-          </button>
+            <button
+              type="button"
+              class="btn-primary h-8 shrink-0 justify-center px-3"
+              disabled={!accountByProvider[provider.id] || launching}
+              onclick={() => void go(provider.id)}
+              aria-label={`${m.commonLaunch()} — ${provider.name}`}
+            >
+              <Play class="size-3.5" />
+              {m.commonLaunch()}
+            </button>
+          </div>
         </div>
       {/each}
     </div>
