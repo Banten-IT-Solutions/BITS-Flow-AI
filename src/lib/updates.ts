@@ -1,7 +1,12 @@
 import { z } from "zod";
 import { REPO_URL } from "./types";
 
-const LATEST_RELEASE_API = `${REPO_URL.replace("https://github.com", "https://api.github.com")}/releases/latest`;
+/** api.github.com counterpart of a github.com repo URL. */
+export function latestReleaseApi(repoUrl: string): string {
+  return `${repoUrl.replace("https://github.com", "https://api.github.com/repos")}/releases/latest`;
+}
+
+const LATEST_RELEASE_API = latestReleaseApi(REPO_URL);
 
 const releaseSchema = z.object({
   tag_name: z.string().min(1),

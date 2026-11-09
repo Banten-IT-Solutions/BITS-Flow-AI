@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isNewerVersion, pickDebAsset } from "./updates";
+import { isNewerVersion, latestReleaseApi, pickDebAsset } from "./updates";
 
 describe("isNewerVersion", () => {
   it("detects newer patch, minor, and major versions", () => {
@@ -22,6 +22,14 @@ describe("isNewerVersion", () => {
   it("treats missing parts as zero", () => {
     expect(isNewerVersion("1.2", "1.1.9")).toBe(true);
     expect(isNewerVersion("1", "1.0.0")).toBe(false);
+  });
+});
+
+describe("latestReleaseApi", () => {
+  it("maps the repo URL onto the /repos API path", () => {
+    expect(latestReleaseApi("https://github.com/Banten-IT-Solutions/BITS-Flow-AI")).toBe(
+      "https://api.github.com/repos/Banten-IT-Solutions/BITS-Flow-AI/releases/latest",
+    );
   });
 });
 
