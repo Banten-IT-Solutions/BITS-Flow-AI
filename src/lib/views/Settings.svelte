@@ -28,7 +28,7 @@
     settings.set(next);
     if (part.language) {
       const locale = applyLocale();
-      await setLocale(locale);
+      await setLocale(locale, { reload: false });
       uiLocale.set(locale);
     }
     try {
@@ -37,10 +37,10 @@
       setTimeout(() => (savedFlash = false), 2000);
     } catch (e) {
       settings.set(prev);
-        // Revert the live locale the same way the success branch resolved it.
+      // Revert the live locale the same way the success branch resolved it.
       if (part.language) {
         const locale = applyLocale();
-        await setLocale(locale);
+        await setLocale(locale, { reload: false });
         uiLocale.set(locale);
       }
       toast(commandError(e));

@@ -47,7 +47,7 @@
 
   onMount(() => {
     loadAll()
-      .then(() => setLocale(get(uiLocale)))
+      .then(() => setLocale(get(uiLocale), { reload: false }))
       .catch((e) => console.error("init failed", e));
     void refreshOpenPersonas();
     // Persona windows can be closed outside this view; Rust emits this event
