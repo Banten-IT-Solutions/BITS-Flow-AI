@@ -66,14 +66,14 @@
 </script>
 
 <Modal title={prompt ? m.commonEdit() : m.commonAdd()} {onclose}>
-  <form class="space-y-3" onsubmit={submit}>
-    <div class="grid grid-cols-[1fr_auto_auto] items-end gap-3">
-      <label class="flex flex-col gap-1">
-        <span class="view-desc">{m.commonTitle()}</span>
-        <input class="input" bind:value={title} required />
-      </label>
-      <label class="flex w-36 flex-col gap-1">
-        <span class="view-desc">{m.commonCategory()}</span>
+  <form class="space-y-4" onsubmit={submit}>
+    <label class="flex flex-col gap-1.5">
+      <span class="text-sm font-medium">{m.commonTitle()}</span>
+      <input class="input" bind:value={title} required />
+    </label>
+    <div class="grid grid-cols-2 gap-3">
+      <label class="flex flex-col gap-1.5">
+        <span class="text-sm font-medium">{m.commonCategory()}</span>
         <Select
           ariaLabel={m.commonCategory()}
           bind:value={category}
@@ -83,19 +83,26 @@
           }))}
         />
       </label>
-      <label class="flex h-9 items-center gap-2 pb-0.5">
-        <input type="checkbox" class="size-4 accent-(--accent)" bind:checked={pinned} />
-        <span class="text-sm">{m.promptsPinned()}</span>
-      </label>
+      <div class="flex flex-col gap-1.5">
+        <span class="text-sm font-medium">{m.promptsPinned()}</span>
+        <label class="flex h-9 cursor-pointer items-center select-none">
+          <input type="checkbox" class="peer sr-only" bind:checked={pinned} />
+          <!-- Toggle switch: track + sliding knob, accent when pinned. -->
+          <span
+            class="relative inline-flex h-5 w-9 shrink-0 rounded-full border border-line bg-line transition-colors duration-150 after:absolute after:top-0.5 after:left-0.5 after:size-3.5 after:rounded-full after:bg-fg after:transition-transform after:duration-150 peer-checked:border-accent peer-checked:bg-accent peer-checked:after:translate-x-4 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-accent"
+          ></span>
+        </label>
+      </div>
     </div>
-    <label class="flex flex-col gap-1">
-      <span class="view-desc">{m.commonBody()}</span>
-      <textarea class="input min-h-32 py-2 font-mono" bind:value={body} required></textarea>
+    <label class="flex flex-col gap-1.5">
+      <span class="text-sm font-medium">{m.commonBody()}</span>
+      <textarea class="input min-h-36 resize-y py-2 font-mono" bind:value={body} required
+      ></textarea>
     </label>
     {#if error}<p class="error-text">{error}</p>{/if}
-    <div class="flex gap-2">
-      <button class="btn-primary" type="submit" disabled={saving}>{m.commonSave()}</button>
+    <div class="flex justify-end gap-2 pt-1">
       <button class="btn" type="button" onclick={onclose}>{m.commonCancel()}</button>
+      <button class="btn-primary" type="submit" disabled={saving}>{m.commonSave()}</button>
     </div>
   </form>
 </Modal>

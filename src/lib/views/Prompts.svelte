@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Copy, Pin, PinOff, Plus } from "@lucide/svelte";
+  import { Copy, NotebookText, Pin, PinOff, Plus, Search } from "@lucide/svelte";
   import { savePrompts } from "../api";
   import { copyText } from "../clipboard";
   import { commandError } from "../errors";
@@ -88,7 +88,10 @@
 <div class="view">
   <div class="flex items-center justify-between gap-3">
     <div class="space-y-1">
-      <h1 class="view-title">{m.promptsTitle()}</h1>
+      <div class="flex items-center gap-2">
+        <h1 class="view-title">{m.promptsTitle()}</h1>
+        {#if $prompts.length > 0}<span class="chip">{$prompts.length}</span>{/if}
+      </div>
       <p class="view-desc">{m.promptsDescription()}</p>
     </div>
     <div class="flex items-center gap-2">
@@ -112,20 +115,37 @@
   </div>
 
   {#if $prompts.length === 0}
-    <p class="view-desc">{m.promptsEmpty()}</p>
+    <div class="card flex flex-col items-center gap-3 py-14 text-center">
+      <NotebookText class="size-8 text-muted" aria-hidden="true" />
+      <p class="text-sm text-muted">{m.promptsEmpty()}</p>
+      <button
+        class="btn-primary"
+        onclick={() => {
+          dialogPrompt = null;
+          dialogOpen = true;
+        }}
+      >
+        <Plus class="size-4" />
+        {m.commonAdd()}
+      </button>
+    </div>
   {:else if sorted.length === 0}
-    <p class="view-desc">{m.commonNoResults()}</p>
+    <div class="card flex flex-col items-center gap-3 py-14 text-center">
+      <Search class="size-8 text-muted" aria-hidden="true" />
+      <p class="text-sm text-muted">{m.commonNoResults()}</p>
+      <button class="btn" onclick={() => (query = "")}>{m.commonCancel()}</button>
+    </div>
   {:else}
     <ul class="space-y-1.5">
       {#each sorted as prompt (prompt.id)}
-        <li class="group row items-start py-2 pr-1.5">
-          <div class="min-w-0 flex-1">
+        <li class="group row items-start py-2.5 pr-1.5 transition-colors duration-150 hover:bg-bg">
+          <div class="min-w-0 flex-1 space-y-1">
             <div class="flex items-center gap-2">
               {#if prompt.pinned}<Pin class="size-3.5 shrink-0 text-accent" />{/if}
               <span class="truncate text-sm font-medium">{prompt.title}</span>
               <span class="chip shrink-0">{categoryLabel(prompt.category, catLabels)}</span>
             </div>
-            <p class="mt-0.5 line-clamp-2 text-xs whitespace-pre-line text-muted">{prompt.body}</p>
+            <p class="line-clamp-2 text-xs whitespace-pre-line text-muted">{prompt.body}</p>
           </div>
           <!-- Copy on hover; stays reachable via keyboard focus. -->
           <button
