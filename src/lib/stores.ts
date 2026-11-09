@@ -1,5 +1,5 @@
 import { get, writable } from "svelte/store";
-import { getSettings, listAccounts, listPrompts, listProviders } from "./api";
+import { getSettings, listAccounts, listPrompts, listProviders, listRecent } from "./api";
 import { resolveLocale, resolveTheme } from "./settings";
 import {
   type Account,
@@ -7,6 +7,7 @@ import {
   type MenuId,
   type Prompt,
   type Provider,
+  type RecentEntry,
   type Settings,
 } from "./types";
 
@@ -20,20 +21,26 @@ export const prompts = writable<Prompt[]>([]);
 export const activePersona = writable<string | null>(null);
 /** Persona labels in open order (oldest first), mirrored from the Rust LRU. */
 export const openOrder = writable<string[]>([]);
+/** Labels of persona windows that are currently open (Home badge). */
+export const openLabels = writable<string[]>([]);
+/** Recent "persona opened provider" activity, newest first. */
+export const recent = writable<RecentEntry[]>([]);
 /** Bumped whenever the UI locale changes so views re-render translated strings. */
 export const uiLocale = writable<"id" | "en">("id");
 
 export async function loadAll(): Promise<void> {
-  const [s, a, p, pr] = await Promise.all([
+  const [s, a, p, pr, r] = await Promise.all([
     getSettings(),
     listAccounts(),
     listProviders(),
     listPrompts(),
+    listRecent().catch(() => []),
   ]);
   settings.set(s);
   accounts.set(a);
   providers.set(p);
   prompts.set(pr);
+  recent.set(r);
   applyTheme();
   uiLocale.set(applyLocale());
 }

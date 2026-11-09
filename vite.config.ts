@@ -20,6 +20,12 @@ export default defineConfig({
     }),
   ],
 
+  // Settings → About reads this. npm_package_version is set by every npm run
+  // script (vite build, tauri build), so it always matches package.json.
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? "0.0.0"),
+  },
+
   clearScreen: false,
   server: {
     port: 1420,

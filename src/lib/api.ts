@@ -77,6 +77,48 @@ export function openPersona(personaId: string, url: string, engine: "webview" | 
   return invoke("open_persona", { personaId, url, engine }).then(openPersonaResultSchema.parse);
 }
 
+export const recentEntrySchema = z.object({
+  providerId: z.string().min(1),
+  personaId: z.string().min(1),
+  personaName: z.string().min(1),
+  providerName: z.string().min(1),
+  ts: z.number(),
+});
+
+export type RecentEntryParsed = z.infer<typeof recentEntrySchema>;
+
+export function listRecent() {
+  return invoke("list_recent").then(z.array(recentEntrySchema).parse);
+}
+
+export function logActivity(input: {
+  providerId: string;
+  personaId: string;
+  personaName: string;
+  providerName: string;
+}) {
+  return invoke("log_activity", { input }).then(z.array(recentEntrySchema).parse);
+}
+
+export function clearPersonaData(personaId: string) {
+  return invoke("clear_persona_data", { personaId });
+}
+
+export const clearAllResultSchema = z.object({
+  cleared: z.array(z.string()),
+  skipped: z.array(z.string()),
+});
+
+export type ClearAllResult = z.infer<typeof clearAllResultSchema>;
+
+export function clearAllPersonaData() {
+  return invoke("clear_all_persona_data").then(clearAllResultSchema.parse);
+}
+
+export function listOpenPersonas() {
+  return invoke("list_open_personas").then(z.array(z.string()).parse);
+}
+
 /** Invalid URL scheme check shared with the Rust boundary (http/https only). */
 export function isValidProviderUrl(url: string): boolean {
   try {

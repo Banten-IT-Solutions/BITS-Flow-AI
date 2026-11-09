@@ -38,6 +38,15 @@ export interface Settings {
   lruSize: number;
 }
 
+/** One "persona opened provider" activity row from recent.json. */
+export interface RecentEntry {
+  providerId: string;
+  personaId: string;
+  personaName: string;
+  providerName: string;
+  ts: number;
+}
+
 export const DEFAULT_SETTINGS: Settings = {
   language: "system",
   theme: "system",
@@ -46,3 +55,18 @@ export const DEFAULT_SETTINGS: Settings = {
 };
 
 export type MenuId = "home" | "accounts" | "providers" | "generate" | "prompts" | "settings";
+
+/** Fixed 8-color persona palette (no purple-blue per design language). */
+export const PERSONA_COLORS = [
+  "#0f766e",
+  "#16a34a",
+  "#d97706",
+  "#ea580c",
+  "#dc2626",
+  "#db2777",
+  "#0891b2",
+  "#64748b",
+] as const;
+
+/** Repository URL shown in Settings → About. */
+export const REPO_URL = "https://github.com/Banten-IT-Solutions/BITS-Flow-AI";

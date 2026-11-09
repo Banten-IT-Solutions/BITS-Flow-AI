@@ -31,7 +31,7 @@ fn persona_label(persona_id: &str) -> String {
     format!("persona-{persona_id}")
 }
 
-fn is_valid_persona_id(id: &str) -> bool {
+pub(crate) fn is_valid_persona_id(id: &str) -> bool {
     !id.is_empty()
         && id.len() <= 128
         && id
@@ -130,9 +130,22 @@ pub fn open_persona(
     })
 }
 
+/// Labels of every currently-open persona window (`persona-*`), for the
+/// Home "open" badge. Sorted for stable UI ordering.
+#[tauri::command]
+pub fn list_open_personas(app: AppHandle) -> Result<Vec<String>, String> {
+    let mut labels: Vec<String> = app
+        .webview_windows()
+        .into_keys()
+        .filter(|label| label.starts_with("persona-"))
+        .collect();
+    labels.sort();
+    Ok(labels)
+}
+
 #[cfg(test)]
 mod tests {
-    use super::evict_plan;
+    use super::{evict_plan, is_valid_persona_id};
 
     fn order(labels: &[&str]) -> Vec<String> {
         labels.iter().map(|l| l.to_string()).collect()
@@ -162,5 +175,15 @@ mod tests {
     fn unknown_labels_are_planned_for_removal() {
         let order = order(&["ghost", "b", "current"]);
         assert_eq!(evict_plan(&order, "current", 2), vec!["ghost"]);
+    }
+
+    #[test]
+    fn persona_id_charset_is_strict() {
+        assert!(is_valid_persona_id("abc-DEF_012"));
+        assert!(!is_valid_persona_id(""));
+        assert!(!is_valid_persona_id("../etc"));
+        assert!(!is_valid_persona_id("with space"));
+        assert!(!is_valid_persona_id(&"x".repeat(129)));
+        assert!(is_valid_persona_id(&"x".repeat(128)));
     }
 }

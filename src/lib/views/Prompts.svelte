@@ -1,180 +1,193 @@
 <script lang="ts">
-import { Pencil, Pin, PinOff, Plus, Trash2, X } from "@lucide/svelte";
-import { savePrompts } from "../api";
-import { m } from "../paraglide/messages";
-import { categoryLabel } from "../settings";
-import { prompts } from "../stores";
-import type { Category, Prompt } from "../types";
+  import { Copy, Pin, PinOff, Plus } from "@lucide/svelte";
+  import { savePrompts } from "../api";
+  import { copyText } from "../clipboard";
+  import { commandError } from "../errors";
+  import { m } from "../paraglide/messages";
+  import { categoryLabel } from "../settings";
+  import { prompts } from "../stores";
+  import { toast } from "../toast";
+  import type { Prompt } from "../types";
+  import { get } from "svelte/store";
+  import ConfirmDelete from "../ui/ConfirmDelete.svelte";
+  import Menu from "../ui/Menu.svelte";
+  import PromptDialog from "../ui/PromptDialog.svelte";
 
-let adding = $state(false);
-let editingId = $state("");
-let draft = $state({ title: "", body: "", category: "both" as Category, pinned: false });
-let saving = $state(false);
-let error = $state("");
+  let query = $state("");
+  let dialogPrompt = $state<Prompt | null>(null);
+  let dialogOpen = $state(false);
+  let confirmTarget = $state<Prompt | null>(null);
+  let confirmBusy = $state(false);
+  let confirmError = $state("");
 
-const catLabels = $derived({
-	image: m.categoryImage(),
-	video: m.categoryVideo(),
-	both: m.categoryBoth(),
-});
+  const catLabels = $derived({
+    image: m.categoryImage(),
+    video: m.categoryVideo(),
+    both: m.categoryBoth(),
+  });
 
-const sorted = $derived([...$prompts].sort((a, b) => Number(b.pinned) - Number(a.pinned)));
+  const sorted = $derived.by(() => {
+    const q = query.trim().toLowerCase();
+    const base = q
+      ? $prompts.filter(
+          (p) => p.title.toLowerCase().includes(q) || p.body.toLowerCase().includes(q),
+        )
+      : $prompts;
+    // Pinned first, insertion order preserved within each group.
+    return [...base].sort((a, b) => Number(b.pinned) - Number(a.pinned));
+  });
 
-function startAdd() {
-	editingId = "";
-	draft = { title: "", body: "", category: "both", pinned: false };
-	adding = true;
-	error = "";
-}
+  async function togglePin(prompt: Prompt) {
+    const next = $prompts.map((p) => (p.id === prompt.id ? { ...p, pinned: !p.pinned } : p));
+    try {
+      await savePrompts(next);
+      prompts.set(next);
+    } catch (e) {
+      toast(commandError(e));
+    }
+  }
 
-function startEdit(prompt: Prompt) {
-	adding = false;
-	editingId = prompt.id;
-	draft = {
-		title: prompt.title,
-		body: prompt.body,
-		category: prompt.category,
-		pinned: prompt.pinned,
-	};
-	error = "";
-}
+  async function copy(prompt: Prompt) {
+    await copyText(prompt.body);
+    toast(m.promptsCopied());
+  }
 
-function cancel() {
-	adding = false;
-	editingId = "";
-	error = "";
-}
+  async function remove(prompt: Prompt) {
+    if (confirmBusy) return;
+    confirmBusy = true;
+    confirmError = "";
+    const idx = $prompts.findIndex((p) => p.id === prompt.id);
+    const next = $prompts.filter((p) => p.id !== prompt.id);
+    try {
+      await savePrompts(next);
+      prompts.set(next);
+      confirmTarget = null;
+      toast(m.commonDeletedToast({ name: prompt.title }), {
+        label: m.commonUndo(),
+        run: () => void restore(prompt, idx),
+      });
+    } catch (e) {
+      confirmError = commandError(e);
+    } finally {
+      confirmBusy = false;
+    }
+  }
 
-async function persist(next: Prompt[]) {
-	saving = true;
-	try {
-		await savePrompts(next);
-		prompts.set(next);
-		cancel();
-	} catch (e) {
-		error = m.errorCommandFailed({ message: String(e) });
-	} finally {
-		saving = false;
-	}
-}
-
-function submit() {
-	if (!draft.title.trim() || !draft.body.trim() || saving) {
-		if (!draft.title.trim() || !draft.body.trim()) error = m.errorRequired();
-		return;
-	}
-	error = "";
-	if (editingId) {
-		const next = $prompts.map((p) =>
-			p.id === editingId
-				? {
-						...p,
-						title: draft.title.trim(),
-						body: draft.body.trim(),
-						category: draft.category,
-						pinned: draft.pinned,
-					}
-				: p,
-		);
-		void persist(next);
-	} else {
-		const prompt: Prompt = {
-			id: crypto.randomUUID(),
-			title: draft.title.trim(),
-			body: draft.body.trim(),
-			category: draft.category,
-			pinned: draft.pinned,
-		};
-		void persist([...$prompts, prompt]);
-	}
-}
-
-function remove(prompt: Prompt) {
-	if (!window.confirm(m.commonConfirmDelete({ name: prompt.title }))) return;
-	void persist($prompts.filter((p) => p.id !== prompt.id));
-}
-
-const showForm = $derived(adding || editingId !== "");
+  async function restore(prompt: Prompt, idx: number) {
+    const list = [...get(prompts)];
+    list.splice(Math.min(idx, list.length), 0, prompt);
+    try {
+      await savePrompts(list);
+      prompts.set(list);
+    } catch (e) {
+      toast(commandError(e));
+    }
+  }
 </script>
 
 <div class="view">
-  <div class="flex items-center justify-between">
+  <div class="flex items-center justify-between gap-3">
     <div class="space-y-1">
       <h1 class="view-title">{m.promptsTitle()}</h1>
       <p class="view-desc">{m.promptsDescription()}</p>
     </div>
-    {#if !showForm}
-      <button class="btn-primary" onclick={startAdd}>
+    <div class="flex items-center gap-2">
+      <input
+        class="input w-56"
+        data-search-input
+        placeholder={m.commonSearch()}
+        bind:value={query}
+      />
+      <button
+        class="btn-primary"
+        onclick={() => {
+          dialogPrompt = null;
+          dialogOpen = true;
+        }}
+      >
         <Plus class="size-4" />
         {m.commonAdd()}
       </button>
-    {/if}
+    </div>
   </div>
-
-  {#if showForm}
-    <form class="card space-y-3" onsubmit={(e) => { e.preventDefault(); submit(); }}>
-      <div class="flex items-end gap-3">
-        <label class="flex flex-1 flex-col gap-1">
-          <span class="view-desc">{m.commonTitle()}</span>
-          <input class="input" bind:value={draft.title} required />
-        </label>
-        <label class="flex w-40 flex-col gap-1">
-          <span class="view-desc">{m.commonCategory()}</span>
-          <select class="input" bind:value={draft.category}>
-            <option value="image">{catLabels.image}</option>
-            <option value="video">{catLabels.video}</option>
-            <option value="both">{catLabels.both}</option>
-          </select>
-        </label>
-        <label class="flex h-9 items-center gap-2">
-          <input type="checkbox" class="size-4 accent-(--accent)" bind:checked={draft.pinned} />
-          <span class="text-sm">{m.promptsPinned()}</span>
-        </label>
-      </div>
-      <label class="flex flex-col gap-1">
-        <span class="view-desc">{m.commonBody()}</span>
-        <textarea class="input min-h-24 py-2" bind:value={draft.body} required></textarea>
-      </label>
-      <div class="flex gap-2">
-        <button class="btn-primary" type="submit" disabled={saving}>{m.commonSave()}</button>
-        <button class="btn" type="button" onclick={cancel}>
-          <X class="size-4" />
-          {m.commonCancel()}
-        </button>
-      </div>
-      {#if error}<p class="error-text">{error}</p>{/if}
-    </form>
-  {/if}
 
   {#if $prompts.length === 0}
     <p class="view-desc">{m.promptsEmpty()}</p>
+  {:else if sorted.length === 0}
+    <p class="view-desc">{m.commonNoResults()}</p>
   {:else}
     <ul class="space-y-1.5">
       {#each sorted as prompt (prompt.id)}
-        <li class="row items-start py-2">
+        <li class="group row items-start py-2 pr-1.5">
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2">
-              {#if prompt.pinned}<Pin class="size-3.5 text-accent" />{/if}
+              {#if prompt.pinned}<Pin class="size-3.5 shrink-0 text-accent" />{/if}
               <span class="truncate text-sm font-medium">{prompt.title}</span>
-              <span class="text-xs text-muted">{categoryLabel(prompt.category, catLabels)}</span>
+              <span class="chip shrink-0">{categoryLabel(prompt.category, catLabels)}</span>
             </div>
-            <p class="mt-0.5 line-clamp-2 text-xs text-muted whitespace-pre-line">{prompt.body}</p>
+            <p class="mt-0.5 line-clamp-2 text-xs whitespace-pre-line text-muted">{prompt.body}</p>
           </div>
+          <!-- Copy on hover; stays reachable via keyboard focus. -->
           <button
+            type="button"
+            class="btn-icon opacity-0 transition-opacity duration-150 group-hover:opacity-100 focus-visible:opacity-100"
+            aria-label={m.commonCopy()}
+            onclick={() => void copy(prompt)}
+          >
+            <Copy class="size-4" />
+          </button>
+          <button
+            type="button"
             class="btn-icon"
-            aria-label={prompt.pinned ? m.promptsPinned() : m.promptsPinned()}
-            onclick={() => void persist($prompts.map((p) => (p.id === prompt.id ? { ...p, pinned: !p.pinned } : p)))}
+            aria-label={m.promptsPinned()}
+            onclick={() => void togglePin(prompt)}
           >
             {#if prompt.pinned}<PinOff class="size-4" />{:else}<Pin class="size-4" />{/if}
           </button>
-          <button class="btn-icon" aria-label={m.commonEdit()} onclick={() => startEdit(prompt)}>
-            <Pencil class="size-4" />
-          </button>
-          <button class="btn-icon hover:text-danger" aria-label={m.commonDelete()} onclick={() => remove(prompt)}>
-            <Trash2 class="size-4" />
-          </button>
+          <Menu
+            label={m.commonActions()}
+            items={[
+              {
+                kind: "action" as const,
+                label: m.commonEdit(),
+                onselect: () => {
+                  dialogPrompt = prompt;
+                  dialogOpen = true;
+                },
+              },
+              {
+                kind: "action" as const,
+                label: m.commonCopy(),
+                onselect: () => void copy(prompt),
+              },
+              {
+                kind: "action" as const,
+                label: m.commonDelete(),
+                danger: true,
+                onselect: () => {
+                  confirmTarget = prompt;
+                  confirmError = "";
+                },
+              },
+            ]}
+          />
         </li>
       {/each}
     </ul>
   {/if}
 </div>
+
+{#if dialogOpen}
+  <PromptDialog prompt={dialogPrompt} onclose={() => (dialogOpen = false)} />
+{/if}
+
+{#if confirmTarget}
+  <ConfirmDelete
+    name={confirmTarget.title}
+    title={m.commonDelete()}
+    busy={confirmBusy}
+    error={confirmError}
+    onconfirm={() => void remove(confirmTarget!)}
+    oncancel={() => (confirmTarget = null)}
+  />
+{/if}

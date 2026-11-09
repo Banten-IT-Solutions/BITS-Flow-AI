@@ -28,7 +28,12 @@ pub fn run() {
             commands::save_prompts,
             commands::get_settings,
             commands::save_settings,
+            commands::log_activity,
+            commands::list_recent,
+            commands::clear_persona_data,
+            commands::clear_all_persona_data,
             persona::open_persona,
+            persona::list_open_personas,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

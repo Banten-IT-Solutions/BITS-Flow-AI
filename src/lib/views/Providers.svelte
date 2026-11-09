@@ -1,163 +1,192 @@
 <script lang="ts">
-import { Pencil, Plus, Trash2, X } from "@lucide/svelte";
-import { isValidProviderUrl, saveProviders } from "../api";
-import { m } from "../paraglide/messages";
-import { categoryLabel } from "../settings";
-import { providers } from "../stores";
-import type { Category, Provider } from "../types";
+  import { Lock, Plus } from "@lucide/svelte";
+  import { saveProviders } from "../api";
+  import { commandError } from "../errors";
+  import { m } from "../paraglide/messages";
+  import { categoryLabel } from "../settings";
+  import { providers } from "../stores";
+  import { toast } from "../toast";
+  import type { Category, Provider } from "../types";
+  import { get } from "svelte/store";
+  import ConfirmDelete from "../ui/ConfirmDelete.svelte";
+  import Menu from "../ui/Menu.svelte";
+  import ProviderDialog from "../ui/ProviderDialog.svelte";
 
-let adding = $state(false);
-let editingId = $state("");
-let draft = $state({ name: "", url: "", category: "both" as Category });
-let saving = $state(false);
-let error = $state("");
+  type Filter = "all" | Category;
 
-const catLabels = $derived({
-	image: m.categoryImage(),
-	video: m.categoryVideo(),
-	both: m.categoryBoth(),
-});
-const engineLabels = $derived({ webview: m.engineWebview(), chrome: m.engineChrome() });
+  let query = $state("");
+  let filter = $state<Filter>("all");
+  let dialogProvider = $state<Provider | null>(null);
+  let dialogOpen = $state(false);
+  let confirmTarget = $state<Provider | null>(null);
+  let confirmBusy = $state(false);
+  let confirmError = $state("");
 
-function startAdd() {
-	editingId = "";
-	draft = { name: "", url: "", category: "both" };
-	adding = true;
-	error = "";
-}
+  const catLabels = $derived({
+    image: m.categoryImage(),
+    video: m.categoryVideo(),
+    both: m.categoryBoth(),
+  });
+  const engineLabels = $derived({ webview: m.engineWebview(), chrome: m.engineChrome() });
 
-function startEdit(provider: Provider) {
-	adding = false;
-	editingId = provider.id;
-	draft = { name: provider.name, url: provider.url, category: provider.category };
-	error = "";
-}
+  const filters: { id: Filter; label: () => string }[] = [
+    { id: "all", label: () => m.providersFilterAll() },
+    { id: "image", label: () => catLabels.image },
+    { id: "video", label: () => catLabels.video },
+    { id: "both", label: () => catLabels.both },
+  ];
 
-function cancel() {
-	adding = false;
-	editingId = "";
-	error = "";
-}
+  const filtered = $derived.by(() => {
+    const q = query.trim().toLowerCase();
+    return $providers.filter(
+      (p) =>
+        (filter === "all" || p.category === filter) &&
+        (!q || p.name.toLowerCase().includes(q) || p.url.toLowerCase().includes(q)),
+    );
+  });
 
-function validate(): boolean {
-	if (!draft.name.trim()) {
-		error = m.errorRequired();
-		return false;
-	}
-	if (!isValidProviderUrl(draft.url.trim())) {
-		error = m.errorInvalidUrl();
-		return false;
-	}
-	error = "";
-	return true;
-}
+  async function remove(provider: Provider) {
+    if (confirmBusy) return;
+    confirmBusy = true;
+    confirmError = "";
+    const idx = $providers.findIndex((p) => p.id === provider.id);
+    const next = $providers.filter((p) => p.id !== provider.id);
+    try {
+      await saveProviders(next);
+      providers.set(next);
+      confirmTarget = null;
+      toast(m.commonDeletedToast({ name: provider.name }), {
+        label: m.commonUndo(),
+        run: () => void restore(provider, idx),
+      });
+    } catch (e) {
+      confirmError = commandError(e);
+    } finally {
+      confirmBusy = false;
+    }
+  }
 
-async function persist(next: Provider[]) {
-	saving = true;
-	try {
-		await saveProviders(next);
-		providers.set(next);
-		cancel();
-	} catch (e) {
-		error = m.errorCommandFailed({ message: String(e) });
-	} finally {
-		saving = false;
-	}
-}
+  async function restore(provider: Provider, idx: number) {
+    const list = [...get(providers)];
+    list.splice(Math.min(idx, list.length), 0, provider);
+    try {
+      await saveProviders(list);
+      providers.set(list);
+    } catch (e) {
+      toast(commandError(e));
+    }
+  }
 
-function submit() {
-	if (!validate() || saving) return;
-	if (editingId) {
-		const next = $providers.map((p) =>
-			p.id === editingId
-				? { ...p, name: draft.name.trim(), url: draft.url.trim(), category: draft.category }
-				: p,
-		);
-		void persist(next);
-	} else {
-		const provider: Provider = {
-			id: crypto.randomUUID(),
-			name: draft.name.trim(),
-			url: draft.url.trim(),
-			category: draft.category,
-			engine: "webview",
-			custom: true,
-		};
-		void persist([...$providers, provider]);
-	}
-}
-
-function remove(provider: Provider) {
-	if (!window.confirm(m.commonConfirmDelete({ name: provider.name }))) return;
-	void persist($providers.filter((p) => p.id !== provider.id));
-}
-
-const showForm = $derived(adding || editingId !== "");
+  function tileLetter(provider: Provider): string {
+    return (provider.name.trim()[0] ?? "?").toUpperCase();
+  }
 </script>
 
 <div class="view">
-  <div class="flex items-center justify-between">
+  <div class="flex items-center justify-between gap-3">
     <div class="space-y-1">
       <h1 class="view-title">{m.providersTitle()}</h1>
       <p class="view-desc">{m.providersDescription()}</p>
     </div>
-    {#if !showForm}
-      <button class="btn-primary" onclick={startAdd}>
+    <div class="flex items-center gap-2">
+      <input
+        class="input w-56"
+        data-search-input
+        placeholder={m.commonSearch()}
+        bind:value={query}
+      />
+      <button
+        class="btn-primary"
+        onclick={() => {
+          dialogProvider = null;
+          dialogOpen = true;
+        }}
+      >
         <Plus class="size-4" />
         {m.commonAdd()}
       </button>
-    {/if}
+    </div>
   </div>
 
-  {#if showForm}
-    <form class="card space-y-3" onsubmit={(e) => { e.preventDefault(); submit(); }}>
-      <div class="grid grid-cols-[1fr_2fr_auto_auto_auto] items-end gap-3">
-        <label class="flex flex-col gap-1">
-          <span class="view-desc">{m.commonName()}</span>
-          <input class="input" bind:value={draft.name} required />
-        </label>
-        <label class="flex flex-col gap-1">
-          <span class="view-desc">{m.commonUrl()}</span>
-          <input class="input" bind:value={draft.url} placeholder="https://…" required />
-        </label>
-        <label class="flex flex-col gap-1">
-          <span class="view-desc">{m.commonCategory()}</span>
-          <select class="input" bind:value={draft.category}>
-            <option value="image">{catLabels.image}</option>
-            <option value="video">{catLabels.video}</option>
-            <option value="both">{catLabels.both}</option>
-          </select>
-        </label>
-        <button class="btn-primary" type="submit" disabled={saving}>{m.commonSave()}</button>
-        <button class="btn" type="button" onclick={cancel}>
-          <X class="size-4" />
-        </button>
-      </div>
-      {#if error}<p class="error-text">{error}</p>{/if}
-    </form>
-  {/if}
+  <div class="flex flex-wrap items-center gap-1.5">
+    {#each filters as f (f.id)}
+      <button
+        type="button"
+        class="h-7 rounded-md border px-2.5 text-xs transition-colors duration-150 {filter === f.id
+          ? "border-accent bg-accent font-medium text-accent-fg"
+          : "border-line bg-surface text-muted hover:bg-bg hover:text-fg"}"
+        aria-pressed={filter === f.id}
+        onclick={() => (filter = f.id)}
+      >
+        {f.label()}
+      </button>
+    {/each}
+  </div>
 
   {#if $providers.length === 0}
     <p class="view-desc">{m.providersEmpty()}</p>
+  {:else if filtered.length === 0}
+    <p class="view-desc">{m.commonNoResults()}</p>
   {:else}
     <ul class="space-y-1.5">
-      {#each $providers as provider (provider.id)}
-        <li class="row py-1.5">
-          <span class="min-w-0 flex-1 truncate text-sm">{provider.name}</span>
-          <span class="min-w-0 flex-[2] truncate text-xs text-muted">{provider.url}</span>
-          <span class="badge {provider.custom ? "" : "opacity-80"}">
-            {provider.custom ? m.providersCustom() : m.providersBuiltin()}
+      {#each filtered as provider (provider.id)}
+        <li class="row pr-1.5">
+          <span
+            class="flex size-8 shrink-0 items-center justify-center rounded-md border border-line bg-bg text-sm font-semibold text-muted"
+            aria-hidden="true"
+          >
+            {tileLetter(provider)}
           </span>
-          <span class="w-28 truncate text-xs text-muted">{categoryLabel(provider.category, catLabels)}</span>
-          <span class="w-32 truncate text-xs text-muted">{engineLabels[provider.engine]}</span>
-          <button class="btn-icon" aria-label={m.commonEdit()} onclick={() => startEdit(provider)}>
-            <Pencil class="size-4" />
-          </button>
-          <button class="btn-icon hover:text-danger" aria-label={m.commonDelete()} onclick={() => remove(provider)}>
-            <Trash2 class="size-4" />
-          </button>
+          <span class="min-w-0 flex-1 truncate text-sm">
+            {provider.name}
+            {#if !provider.custom}<Lock class="ml-1 inline size-3 align-[-2px] text-muted" />{/if}
+          </span>
+          <span class="min-w-0 flex-[2] truncate text-xs text-muted">{provider.url}</span>
+          <span class="chip shrink-0">{categoryLabel(provider.category, catLabels)}</span>
+          <span class="chip shrink-0">{engineLabels[provider.engine]}</span>
+          <Menu
+            label={m.commonActions()}
+            items={[
+              {
+                kind: "action" as const,
+                label: m.commonEdit(),
+                onselect: () => {
+                  dialogProvider = provider;
+                  dialogOpen = true;
+                },
+              },
+              ...(provider.custom
+                ? [
+                    {
+                      kind: "action" as const,
+                      label: m.commonDelete(),
+                      danger: true,
+                      onselect: () => {
+                        confirmTarget = provider;
+                        confirmError = "";
+                      },
+                    },
+                  ]
+                : []),
+            ]}
+          />
         </li>
       {/each}
     </ul>
   {/if}
 </div>
+
+{#if dialogOpen}
+  <ProviderDialog provider={dialogProvider} onclose={() => (dialogOpen = false)} />
+{/if}
+
+{#if confirmTarget}
+  <ConfirmDelete
+    name={confirmTarget.name}
+    title={m.commonDelete()}
+    busy={confirmBusy}
+    error={confirmError}
+    onconfirm={() => void remove(confirmTarget!)}
+    oncancel={() => (confirmTarget = null)}
+  />
+{/if}

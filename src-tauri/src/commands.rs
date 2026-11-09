@@ -4,6 +4,7 @@
 
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
@@ -280,4 +281,173 @@ pub fn save_settings(app: AppHandle, settings: Settings) -> Result<Settings, Str
     let settings = settings.normalized();
     write_json(&path_for(&app, "settings.json")?, &settings)?;
     Ok(settings)
+}
+
+/// One "persona opened provider" activity row. `ts` is unix millis.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RecentEntry {
+    pub provider_id: String,
+    pub persona_id: String,
+    pub persona_name: String,
+    pub provider_name: String,
+    pub ts: u64,
+}
+
+/// Payload for `log_activity`; `ts` is stamped by the backend, never trusted
+/// from the client.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RecentInput {
+    pub provider_id: String,
+    pub persona_id: String,
+    pub persona_name: String,
+    pub provider_name: String,
+}
+
+pub const RECENT_CAP: usize = 50;
+
+/// Pure cap: returns the newest-first list trimmed to the newest `RECENT_CAP`
+/// entries. Sorts defensively so an out-of-order file still keeps the newest.
+fn cap_recent(mut entries: Vec<RecentEntry>) -> Vec<RecentEntry> {
+    entries.sort_by_key(|e| std::cmp::Reverse(e.ts));
+    entries.truncate(RECENT_CAP);
+    entries
+}
+
+fn unix_millis() -> Result<u64, String> {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn list_recent(app: AppHandle) -> Result<Vec<RecentEntry>, String> {
+    let entries: Vec<RecentEntry> = read_json(&path_for(&app, "recent.json")?)?;
+    Ok(cap_recent(entries))
+}
+
+#[tauri::command]
+pub fn log_activity(app: AppHandle, input: RecentInput) -> Result<Vec<RecentEntry>, String> {
+    if input.provider_id.trim().is_empty() || input.provider_name.trim().is_empty() {
+        return Err("provider id and name must not be empty".to_string());
+    }
+    if input.persona_name.trim().is_empty() {
+        return Err("persona name must not be empty".to_string());
+    }
+    if !crate::persona::is_valid_persona_id(&input.persona_id) {
+        return Err(format!("invalid persona id: {:?}", input.persona_id));
+    }
+    let mut recent: Vec<RecentEntry> = read_json(&path_for(&app, "recent.json")?)?;
+    recent.insert(
+        0,
+        RecentEntry {
+            provider_id: input.provider_id,
+            persona_id: input.persona_id,
+            persona_name: input.persona_name,
+            provider_name: input.provider_name,
+            ts: unix_millis()?,
+        },
+    );
+    let recent = cap_recent(recent);
+    write_json(&path_for(&app, "recent.json")?, &recent)?;
+    Ok(recent)
+}
+
+/// Delete a persona's isolated data directory. Refuses while its window is
+/// open so a live WebKitGTK session cannot resurrect or race the deletion.
+#[tauri::command]
+pub fn clear_persona_data(app: AppHandle, persona_id: String) -> Result<(), String> {
+    if !crate::persona::is_valid_persona_id(&persona_id) {
+        return Err(format!("invalid persona id: {persona_id:?}"));
+    }
+    let label = format!("persona-{persona_id}");
+    if app.get_webview_window(&label).is_some() {
+        return Err("error.close_first".to_string());
+    }
+    let dir = app_data_dir(&app)?.join("profiles").join(&persona_id);
+    if !dir.is_dir() {
+        return Err(format!("no data directory for persona: {persona_id}"));
+    }
+    fs::remove_dir_all(&dir).map_err(|e| e.to_string())
+}
+
+/// Result of clearing every persona data directory at once.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ClearAllResult {
+    pub cleared: Vec<String>,
+    pub skipped: Vec<String>,
+}
+
+#[tauri::command]
+pub fn clear_all_persona_data(app: AppHandle) -> Result<ClearAllResult, String> {
+    let profiles = app_data_dir(&app)?.join("profiles");
+    let mut result = ClearAllResult {
+        cleared: Vec::new(),
+        skipped: Vec::new(),
+    };
+    if !profiles.is_dir() {
+        return Ok(result);
+    }
+    let entries = fs::read_dir(&profiles).map_err(|e| e.to_string())?;
+    for entry in entries {
+        let path = entry.map_err(|e| e.to_string())?.path();
+        let Some(name) = path.file_name().and_then(|n| n.to_str()) else {
+            continue;
+        };
+        if !crate::persona::is_valid_persona_id(name) || !path.is_dir() {
+            continue;
+        }
+        if app.get_webview_window(&format!("persona-{name}")).is_some() {
+            result.skipped.push(name.to_string());
+            continue;
+        }
+        fs::remove_dir_all(&path).map_err(|e| e.to_string())?;
+        result.cleared.push(name.to_string());
+    }
+    Ok(result)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn entry(ts: u64) -> RecentEntry {
+        RecentEntry {
+            provider_id: "p".to_string(),
+            persona_id: "a".to_string(),
+            persona_name: "A".to_string(),
+            provider_name: "P".to_string(),
+            ts,
+        }
+    }
+
+    #[test]
+    fn caps_to_the_newest_entries() {
+        let out = cap_recent((0..60).map(entry).collect());
+        assert_eq!(out.len(), RECENT_CAP);
+        assert_eq!(out[0].ts, 59);
+        assert_eq!(out[RECENT_CAP - 1].ts, 10);
+    }
+
+    #[test]
+    fn keeps_everything_under_cap() {
+        let out = cap_recent(vec![entry(1), entry(2), entry(3)]);
+        assert_eq!(out.len(), 3);
+        assert_eq!(out[0].ts, 3);
+    }
+
+    #[test]
+    fn newest_first_regardless_of_input_order() {
+        let out = cap_recent(vec![entry(5), entry(9), entry(7)]);
+        let ts: Vec<u64> = out.iter().map(|e| e.ts).collect();
+        assert_eq!(ts, vec![9, 7, 5]);
+    }
+
+    #[test]
+    fn empty_input_stays_empty() {
+        assert!(cap_recent(Vec::new()).is_empty());
+    }
 }

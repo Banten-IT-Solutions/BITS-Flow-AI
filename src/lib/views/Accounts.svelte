@@ -1,152 +1,169 @@
 <script lang="ts">
-import { Pencil, Plus, Trash2, X } from "@lucide/svelte";
-import { saveAccounts } from "../api";
-import { m } from "../paraglide/messages";
-import { accounts } from "../stores";
-import type { Account } from "../types";
+  import { Plus } from "@lucide/svelte";
+  import { saveAccounts } from "../api";
+  import { commandError } from "../errors";
+  import { m } from "../paraglide/messages";
+  import { accounts, recent, uiLocale } from "../stores";
+  import { toast } from "../toast";
+  import { formatRelative } from "../time";
+  import type { Account } from "../types";
+  import { get } from "svelte/store";
+  import AccountDialog from "../ui/AccountDialog.svelte";
+  import ConfirmDelete from "../ui/ConfirmDelete.svelte";
+  import Menu from "../ui/Menu.svelte";
 
-let adding = $state(false);
-let editingId = $state("");
-let draft = $state({ name: "", email: "", color: "" });
-let saving = $state(false);
-let error = $state("");
+  let query = $state("");
+  let dialogAccount = $state<Account | null>(null);
+  let dialogOpen = $state(false);
+  let confirmTarget = $state<Account | null>(null);
+  let confirmBusy = $state(false);
+  let confirmError = $state("");
 
-function startAdd() {
-	editingId = "";
-	draft = { name: "", email: "", color: "" };
-	adding = true;
-	error = "";
-}
+  const filtered = $derived(
+    query.trim()
+      ? $accounts.filter(
+          (a) =>
+            a.name.toLowerCase().includes(query.trim().toLowerCase()) ||
+            a.email.toLowerCase().includes(query.trim().toLowerCase()),
+        )
+      : $accounts,
+  );
 
-function startEdit(account: Account) {
-	adding = false;
-	editingId = account.id;
-	draft = { name: account.name, email: account.email, color: account.color ?? "" };
-	error = "";
-}
+  function lastUsedTs(account: Account): number | null {
+    const latest = $recent.find((r) => r.personaId === account.id);
+    return latest ? latest.ts : null;
+  }
 
-function cancel() {
-	adding = false;
-	editingId = "";
-	error = "";
-}
+  async function remove(account: Account) {
+    if (confirmBusy) return;
+    confirmBusy = true;
+    confirmError = "";
+    const idx = $accounts.findIndex((a) => a.id === account.id);
+    const next = $accounts.filter((a) => a.id !== account.id);
+    try {
+      await saveAccounts(next);
+      accounts.set(next);
+      confirmTarget = null;
+      toast(m.commonDeletedToast({ name: account.name }), {
+        label: m.commonUndo(),
+        run: () => void restore(account, idx),
+      });
+    } catch (e) {
+      confirmError = commandError(e);
+    } finally {
+      confirmBusy = false;
+    }
+  }
 
-function validate(): boolean {
-	if (!draft.name.trim() || !draft.email.trim()) {
-		error = m.errorRequired();
-		return false;
-	}
-	if (!draft.email.includes("@")) {
-		error = m.errorInvalidEmail();
-		return false;
-	}
-	error = "";
-	return true;
-}
-
-async function persist(next: Account[]) {
-	saving = true;
-	try {
-		await saveAccounts(next);
-		accounts.set(next);
-		cancel();
-	} catch (e) {
-		error = m.errorCommandFailed({ message: String(e) });
-	} finally {
-		saving = false;
-	}
-}
-
-function submit() {
-	if (!validate() || saving) return;
-	if (editingId) {
-		const next = $accounts.map((a) =>
-			a.id === editingId
-				? { ...a, name: draft.name.trim(), email: draft.email.trim(), color: draft.color || null }
-				: a,
-		);
-		void persist(next);
-	} else {
-		const account: Account = {
-			id: crypto.randomUUID(),
-			name: draft.name.trim(),
-			email: draft.email.trim(),
-			color: draft.color || null,
-			createdAt: new Date().toISOString(),
-		};
-		void persist([...$accounts, account]);
-	}
-}
-
-function remove(account: Account) {
-	if (!window.confirm(m.commonConfirmDelete({ name: account.name }))) return;
-	void persist($accounts.filter((a) => a.id !== account.id));
-}
-
-const showForm = $derived(adding || editingId !== "");
+  async function restore(account: Account, idx: number) {
+    const list = [...get(accounts)];
+    list.splice(Math.min(idx, list.length), 0, account);
+    try {
+      await saveAccounts(list);
+      accounts.set(list);
+    } catch (e) {
+      toast(commandError(e));
+    }
+  }
 </script>
 
 <div class="view">
-  <div class="flex items-center justify-between">
+  <div class="flex items-center justify-between gap-3">
     <div class="space-y-1">
       <h1 class="view-title">{m.accountsTitle()}</h1>
       <p class="view-desc">{m.accountsDescription()}</p>
     </div>
-    {#if !showForm}
-      <button class="btn-primary" onclick={startAdd}>
+    <div class="flex items-center gap-2">
+      <input
+        class="input w-56"
+        data-search-input
+        placeholder={m.commonSearch()}
+        bind:value={query}
+      />
+      <button
+        class="btn-primary"
+        onclick={() => {
+          dialogAccount = null;
+          dialogOpen = true;
+        }}
+      >
         <Plus class="size-4" />
         {m.commonAdd()}
       </button>
-    {/if}
+    </div>
   </div>
 
-  {#if showForm}
-    <form class="card space-y-3" onsubmit={(e) => { e.preventDefault(); submit(); }}>
-      <div class="grid grid-cols-[1fr_1fr_auto_auto] items-end gap-3">
-        <label class="flex flex-col gap-1">
-          <span class="view-desc">{m.commonName()}</span>
-          <input class="input" bind:value={draft.name} required />
-        </label>
-        <label class="flex flex-col gap-1">
-          <span class="view-desc">{m.commonEmail()}</span>
-          <input class="input" type="email" bind:value={draft.email} required />
-        </label>
-        <label class="flex flex-col gap-1">
-          <span class="view-desc">{m.commonColor()}</span>
-          <input class="input h-9 w-14 p-1" type="color" bind:value={draft.color} />
-        </label>
-        <div class="flex gap-2">
-          <button class="btn-primary" type="submit" disabled={saving}>{m.commonSave()}</button>
-          <button class="btn" type="button" onclick={cancel}>
-            <X class="size-4" />
-            {m.commonCancel()}
-          </button>
-        </div>
-      </div>
-      {#if error}<p class="error-text">{error}</p>{/if}
-    </form>
-  {/if}
-
   {#if $accounts.length === 0}
-    <p class="view-desc">{m.accountsEmpty()}</p>
+    <div class="card flex items-center justify-between gap-3">
+      <p class="view-desc">{m.accountsEmpty()}</p>
+      <button
+        class="btn-primary"
+        onclick={() => {
+          dialogAccount = null;
+          dialogOpen = true;
+        }}
+      >
+        <Plus class="size-4" />
+        {m.commonAdd()}
+      </button>
+    </div>
+  {:else if filtered.length === 0}
+    <p class="view-desc">{m.commonNoResults()}</p>
   {:else}
     <ul class="space-y-1.5">
-      {#each $accounts as account (account.id)}
-        <li class="row py-1.5">
+      {#each filtered as account (account.id)}
+        {@const ts = lastUsedTs(account)}
+        <li class="row pr-1.5">
           <span
             class="size-3 shrink-0 rounded-full border border-line"
             style:background={account.color ?? "var(--fg-muted)"}
           ></span>
-          <span class="min-w-0 flex-1 truncate text-sm">{account.name}</span>
-          <span class="min-w-0 flex-1 truncate text-xs text-muted">{account.email}</span>
-          <button class="btn-icon" aria-label={m.commonEdit()} onclick={() => startEdit(account)}>
-            <Pencil class="size-4" />
-          </button>
-          <button class="btn-icon hover:text-danger" aria-label={m.commonDelete()} onclick={() => remove(account)}>
-            <Trash2 class="size-4" />
-          </button>
+          <span class="min-w-0 flex-[2] truncate text-sm">{account.name}</span>
+          <span class="min-w-0 flex-[2] truncate text-xs text-muted">{account.email}</span>
+          <span class="w-36 shrink-0 truncate text-right text-xs text-muted">
+            {ts === null
+              ? m.commonNeverUsed()
+              : m.commonLastUsed({ time: formatRelative(ts, $uiLocale) })}
+          </span>
+          <Menu
+            label={m.commonActions()}
+            items={[
+              {
+                kind: "action" as const,
+                label: m.commonEdit(),
+                onselect: () => {
+                  dialogAccount = account;
+                  dialogOpen = true;
+                },
+              },
+              {
+                kind: "action" as const,
+                label: m.commonDelete(),
+                danger: true,
+                onselect: () => {
+                  confirmTarget = account;
+                  confirmError = "";
+                },
+              },
+            ]}
+          />
         </li>
       {/each}
     </ul>
   {/if}
 </div>
+
+{#if dialogOpen}
+  <AccountDialog account={dialogAccount} onclose={() => (dialogOpen = false)} />
+{/if}
+
+{#if confirmTarget}
+  <ConfirmDelete
+    name={confirmTarget.name}
+    title={m.commonDelete()}
+    busy={confirmBusy}
+    error={confirmError}
+    onconfirm={() => void remove(confirmTarget!)}
+    oncancel={() => (confirmTarget = null)}
+  />
+{/if}
