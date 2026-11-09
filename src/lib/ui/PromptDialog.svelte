@@ -71,8 +71,8 @@
       <span class="text-sm font-medium">{m.commonTitle()}</span>
       <input class="input" bind:value={title} required />
     </label>
-    <div class="grid grid-cols-2 gap-3">
-      <label class="flex flex-col gap-1.5">
+    <div class="grid grid-cols-12 gap-3">
+      <label class="col-span-8 flex flex-col gap-1.5">
         <span class="text-sm font-medium">{m.commonCategory()}</span>
         <Select
           ariaLabel={m.commonCategory()}
@@ -83,7 +83,7 @@
           }))}
         />
       </label>
-      <div class="flex flex-col gap-1.5">
+      <div class="col-span-4 flex flex-col gap-1.5">
         <span class="text-sm font-medium">{m.promptsPinned()}</span>
         <label class="flex h-9 cursor-pointer items-center select-none">
           <input type="checkbox" class="peer sr-only" bind:checked={pinned} />
