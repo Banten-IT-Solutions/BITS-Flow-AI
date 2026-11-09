@@ -27,9 +27,9 @@
       #bar {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         height: 100%;
-        padding: 0 10px;
+        padding: 0 8px;
         box-sizing: border-box;
         border-bottom: 1px solid var(--line);
         font-size: 12px;
@@ -37,20 +37,21 @@
       #bar .who {
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 4px;
         min-width: 0;
         max-width: 26%;
       }
       #bar .who .tile {
         flex: none;
-        width: 22px;
-        height: 22px;
+        width: 20px;
+        height: 20px;
         display: grid;
         place-items: center;
         border: 1px solid var(--line);
-        border-radius: 6px;
+        border-radius: 5px;
         background: var(--bg);
         color: var(--muted);
+        font-size: 11px;
         font-weight: 600;
       }
       #bar .who .name {
@@ -62,13 +63,13 @@
       #bar select {
         flex: 1 1 auto;
         min-width: 0;
-        height: 26px;
+        height: 22px;
         border: 1px solid var(--line);
-        border-radius: 6px;
+        border-radius: 5px;
         background: var(--bg);
         color: var(--fg);
         font: inherit;
-        padding: 0 6px;
+        padding: 0 4px;
       }
       #bar select:focus {
         outline: 1px solid var(--accent);
