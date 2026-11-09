@@ -3,6 +3,13 @@
 All notable changes to BITS Flow AI are documented here. The format follows Keep a Changelog
 and the project uses semantic versioning.
 
+## [1.2.1](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.2.0...1.2.1) (2026-11-09)
+
+
+### Bug Fixes
+
+* embed 128px PNG as default window icon ([1e06372](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/1e06372524e856836e063fd5a82074f0d39333ef))
+
 # [1.2.0](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.1.9...1.2.0) (2026-11-09)
 
 
