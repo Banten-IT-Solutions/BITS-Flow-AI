@@ -3,6 +3,21 @@
 All notable changes to BITS Flow AI are documented here. The format follows Keep a Changelog
 and the project uses semantic versioning.
 
+# [1.6.0](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.5.4...1.6.0) (2026-11-09)
+
+
+### Bug Fixes
+
+* give persona toolbar a real fixed height on Linux ([4dd7f93](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/4dd7f93de374abc6036b4dbffe1069a06c9db29d))
+* render Generate view and offer only two languages ([0463deb](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/0463deb7466c25690e52d604f6e1e2065080ba50))
+
+
+### Features
+
+* compact persona toolbar strip ([ae68ac4](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/ae68ac4db7a11ede94c06fa9be82227411fd1e5b))
+* one-row Generate cards with account select and launch button ([378f6e8](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/378f6e8c6965963f9edaecb8094139dccb484823))
+* shrink persona toolbar to a 10px micro strip ([87f3a42](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/87f3a42b31cd0bbf8795291b6583497a2edfb7fb))
+
 ## [1.5.4](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.5.3...1.5.4) (2026-11-09)
 
 

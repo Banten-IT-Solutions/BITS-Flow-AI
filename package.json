@@ -1,6 +1,6 @@
 {
   "name": "bits-flow-ai",
-  "version": "1.5.4",
+  "version": "1.6.0",
   "description": "BITS Flow AI — isolated browser profiles for AI providers",
   "type": "module",
   "license": "MIT",
