@@ -3,6 +3,37 @@
 All notable changes to BITS Flow AI are documented here. The format follows Keep a Changelog
 and the project uses semantic versioning.
 
+# [1.2.0](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.1.9...1.2.0) (2026-11-09)
+
+
+### Bug Fixes
+
+* lay general settings fields in a single three-column row ([a9b1c2e](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/a9b1c2e3b60ca4f3848bf0c97ecd34239f21f45c))
+* point Flow at flow.google.com and keep built-in provider URLs fresh ([19a6e86](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/19a6e86355172628562cb1310c3df7e040026e14))
+* restore visible pinned label with right-aligned switch ([7ec24fd](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/7ec24fd75e1aab130e0e73deda59516e65e00878))
+
+
+### Features
+
+* add Adobe Firefly and ChatGPT as builtins ([48e84ba](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/48e84bac1590a1cf7cc5b3034957723bee76f00b))
+* add Dola and Dreamina as builtins ([2ae2a4f](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/2ae2a4f9a4a4001f7022687475c3df0e5149c3e8))
+* add missing descriptions to Generate and Settings headers ([fee569e](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/fee569eeced28044b620350a0ff457575cd700de))
+* auto-grow prompt body textarea capped at 256px ([87e8579](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/87e8579cc73b2c7d11c62d6f5b95ea9fc441e49f))
+* category filter pills in Prompts, matching Providers and Generate ([8810e7a](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/8810e7a35058a794b532c124443994f9a631b499))
+* colored export and import buttons with success palette ([08e350e](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/08e350ee13cbde49375e00023c4cd3a003cd3450))
+* drop Suno; add Dreamina and Bing Image Creator as builtins ([0f3e5d1](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/0f3e5d148ec9119e17cf2f6bd58441f7a83f8a3b))
+* export and import for accounts and prompts ([1f2d3cf](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/1f2d3cf308af0f91f901f994dc0ee83899b1bdb4))
+* Home focuses on personas; recent rows relaunch their combo ([cec3014](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/cec3014af119e938f1869529ad2f8b21be59b8d6))
+* keep only builtins whose free tier resets daily without a watermark ([cdf06b8](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/cdf06b86ce98d049982676bdda5e001861a60def))
+* modernize prompt view and dialog ([3a10983](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/3a10983cdf1d293c90483fa9192f4f528ff565c6))
+* polish Home layout ([f8d5455](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/f8d54550717679a2192f12a47eed6cd0c74cc5a1))
+* polished two-line app identity in sidebar footer ([623918f](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/623918febb99b6bef7d55a4e7167e35225e9a2da))
+* show app version instead of locale chip in sidebar footer ([027f60a](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/027f60acf78bfefa1eb2d00198ee7f67b9aefcb5))
+* show BITS Flow AI brand logo in sidebar header ([380a143](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/380a143339b09e7e82a1454b105b073b3057c1b4))
+* sidebar version label and GitHub update button ([5caef89](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/5caef89c42414eb41afd06568a6a43169d5b1c5f))
+* unified custom Select dropdown and merged Settings general card ([80157ef](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/80157efa6f33663d064f8e306b91d1ebe53bb32f))
+* unified EmptyState component across all views ([7b39fd0](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/7b39fd073aaf6cee77fc39d8ee51636f1286367f))
+
 ## [1.1.9](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.1.8...1.1.9) (2026-11-09)
 
 
