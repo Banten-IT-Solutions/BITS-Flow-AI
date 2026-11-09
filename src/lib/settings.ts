@@ -1,16 +1,9 @@
-import type { Category, LanguageSetting, Provider, ThemeSetting } from "./types";
+import type { Category, LanguageSetting, Provider } from "./types";
 
 /** Resolve a settings value against the host preference. Default locale is `id`. */
 export function resolveLocale(setting: LanguageSetting, systemLocale: string): "id" | "en" {
   if (setting === "system") {
     return systemLocale.toLowerCase().startsWith("id") ? "id" : "en";
-  }
-  return setting;
-}
-
-export function resolveTheme(setting: ThemeSetting, darkPreferred: boolean): "light" | "dark" {
-  if (setting === "system") {
-    return darkPreferred ? "dark" : "light";
   }
   return setting;
 }

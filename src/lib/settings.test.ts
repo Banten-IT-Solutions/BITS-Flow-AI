@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { filterProviders, resolveLocale, resolveTheme } from "./settings";
+import { filterProviders, resolveLocale } from "./settings";
 import type { Provider } from "./types";
 
 const providers: Provider[] = [
@@ -39,15 +39,6 @@ describe("resolveLocale", () => {
   it("uses the explicit override", () => {
     expect(resolveLocale("en", "id-ID")).toBe("en");
     expect(resolveLocale("id", "en-US")).toBe("id");
-  });
-});
-
-describe("resolveTheme", () => {
-  it("follows system preference and honors explicit values", () => {
-    expect(resolveTheme("system", true)).toBe("dark");
-    expect(resolveTheme("system", false)).toBe("light");
-    expect(resolveTheme("dark", false)).toBe("dark");
-    expect(resolveTheme("light", true)).toBe("light");
   });
 });
 

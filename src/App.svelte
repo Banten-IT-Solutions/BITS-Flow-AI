@@ -3,11 +3,8 @@
     BookMarked,
     Globe,
     House,
-    Monitor,
-    Moon,
     Settings as SettingsIcon,
     Sparkles,
-    Sun,
     Users,
   } from "@lucide/svelte";
   import { onMount } from "svelte";
@@ -17,10 +14,9 @@
   import { lastUsedProvider, launchPersona, refreshOpenPersonas } from "./lib/launch";
   import { m } from "./lib/paraglide/messages";
   import { setLocale } from "./lib/paraglide/runtime";
-  import { activeMenu, accounts, applyTheme, initSystemListeners, loadAll, providers, recent, settings, uiLocale } from "./lib/stores";
   import { toast } from "./lib/toast";
-  import type { Account, MenuId, Settings, ThemeSetting } from "./lib/types";
-  import { saveSettings } from "./lib/api";
+  import { activeMenu, accounts, loadAll, providers, recent, uiLocale } from "./lib/stores";
+  import type { Account, MenuId } from "./lib/types";
   import Accounts from "./lib/views/Accounts.svelte";
   import Generate from "./lib/views/Generate.svelte";
   import Home from "./lib/views/Home.svelte";
@@ -49,18 +45,7 @@
     settings: m.menuSettings,
   };
 
-  const themeIcons: Record<ThemeSetting, typeof Sun> = {
-    system: Monitor,
-    light: Sun,
-    dark: Moon,
-  };
-
-  const THEME_ORDER: ThemeSetting[] = ["system", "light", "dark"];
-
-  const ThemeIcon = $derived(themeIcons[$settings.theme]);
-
   onMount(() => {
-    const stop = initSystemListeners();
     loadAll()
       .then(() => setLocale(get(uiLocale)))
       .catch((e) => console.error("init failed", e));
@@ -72,27 +57,9 @@
       unlisten = fn;
     });
     return () => {
-      stop();
       unlisten?.();
     };
   });
-
-  /** 3-state cycle: system → light → dark → system. */
-  async function cycleTheme() {
-    const current = get(settings).theme;
-    const next = THEME_ORDER[(THEME_ORDER.indexOf(current) + 1) % THEME_ORDER.length];
-    const prev = get(settings);
-    const nextSettings: Settings = { ...prev, theme: next };
-    settings.set(nextSettings);
-    applyTheme();
-    try {
-      await saveSettings(nextSettings);
-    } catch (e) {
-      settings.set(prev);
-      applyTheme();
-      toast(commandError(e));
-    }
-  }
 
   /** Ctrl+1..9: open the nth persona (list order) with its last-used provider. */
   async function quickOpen(account: Account) {
@@ -163,15 +130,6 @@
     </ul>
 
     <div class="mt-auto flex items-center justify-between border-t border-line px-4 py-3">
-      <button
-        type="button"
-        class="btn-icon"
-        aria-label={m.settingsTheme()}
-        title={m.settingsTheme()}
-        onclick={() => void cycleTheme()}
-      >
-        <ThemeIcon class="size-4" />
-      </button>
       <span class="chip uppercase" title={m.settingsLanguage()}>{$uiLocale}</span>
     </div>
   </nav>

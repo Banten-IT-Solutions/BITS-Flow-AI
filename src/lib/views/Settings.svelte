@@ -5,7 +5,7 @@
   import { commandError } from "../errors";
   import { m } from "../paraglide/messages";
   import { setLocale } from "../paraglide/runtime";
-  import { activeMenu, applyLocale, applyTheme, accounts, providers, settings, uiLocale } from "../stores";
+  import { activeMenu, applyLocale, accounts, providers, settings, uiLocale } from "../stores";
   import { toast } from "../toast";
   import { REPO_URL, type Settings } from "../types";
   import { get } from "svelte/store";
@@ -21,12 +21,11 @@
   let confirmError = $state("");
   let savedFlash = $state(false);
 
-  /** Apply one settings patch immediately: persist, then re-render theme/locale. */
+  /** Apply one settings patch immediately and persist it. */
   async function patch(part: Partial<Settings>) {
     const prev = get(settings);
     const next = { ...prev, ...part };
     settings.set(next);
-    applyTheme();
     if (part.language) {
       const locale = applyLocale();
       await setLocale(locale);
@@ -38,8 +37,7 @@
       setTimeout(() => (savedFlash = false), 2000);
     } catch (e) {
       settings.set(prev);
-      applyTheme();
-      // Revert the live locale the same way the success branch resolved it.
+        // Revert the live locale the same way the success branch resolved it.
       if (part.language) {
         const locale = applyLocale();
         await setLocale(locale);
@@ -116,18 +114,6 @@
           <option value="system">{m.settingsSystem()}</option>
           <option value="id">Bahasa Indonesia</option>
           <option value="en">English</option>
-        </select>
-      </label>
-      <label class="flex flex-col gap-1">
-        <span class="text-sm font-medium">{m.settingsTheme()}</span>
-        <select
-          class="input"
-          value={$settings.theme}
-          onchange={(e) => void patch({ theme: e.currentTarget.value as Settings["theme"] })}
-        >
-          <option value="system">{m.settingsSystem()}</option>
-          <option value="light">{m.settingsLight()}</option>
-          <option value="dark">{m.settingsDark()}</option>
         </select>
       </label>
     </div>

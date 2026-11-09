@@ -28,7 +28,6 @@ export const promptSchema = z.object({
 
 export const settingsSchema = z.object({
   language: z.enum(["system", "id", "en"]),
-  theme: z.enum(["system", "light", "dark"]),
   closeBehavior: z.enum(["exit", "hide"]),
   lruSize: z.number().int().min(1).max(10),
 });

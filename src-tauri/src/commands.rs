@@ -68,14 +68,6 @@ pub enum LanguageSetting {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum ThemeSetting {
-    System,
-    Light,
-    Dark,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
 pub enum CloseBehavior {
     Exit,
     Hide,
@@ -85,7 +77,6 @@ pub enum CloseBehavior {
 #[serde(rename_all = "camelCase")]
 pub struct Settings {
     pub language: LanguageSetting,
-    pub theme: ThemeSetting,
     pub close_behavior: CloseBehavior,
     pub lru_size: u32,
 }
@@ -94,7 +85,6 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             language: LanguageSetting::System,
-            theme: ThemeSetting::System,
             close_behavior: CloseBehavior::Exit,
             lru_size: 3,
         }
@@ -476,6 +466,17 @@ mod tests {
         let out = cap_recent(vec![entry(5), entry(9), entry(7)]);
         let ts: Vec<u64> = out.iter().map(|e| e.ts).collect();
         assert_eq!(ts, vec![9, 7, 5]);
+    }
+
+    #[test]
+    fn old_theme_setting_is_ignored_and_other_values_load() {
+        let settings: Settings = serde_json::from_str(
+            r#"{"language":"en","theme":"light","closeBehavior":"hide","lruSize":5}"#,
+        )
+        .unwrap();
+        assert_eq!(settings.language, LanguageSetting::En);
+        assert_eq!(settings.close_behavior, CloseBehavior::Hide);
+        assert_eq!(settings.lru_size, 5);
     }
 
     #[test]

@@ -3,7 +3,6 @@
 export type Category = "image" | "video" | "both";
 export type Engine = "webview" | "chrome";
 export type LanguageSetting = "system" | "id" | "en";
-export type ThemeSetting = "system" | "light" | "dark";
 export type CloseBehavior = "exit" | "hide";
 
 export interface Account {
@@ -33,7 +32,6 @@ export interface Prompt {
 
 export interface Settings {
   language: LanguageSetting;
-  theme: ThemeSetting;
   closeBehavior: CloseBehavior;
   lruSize: number;
 }
@@ -49,7 +47,6 @@ export interface RecentEntry {
 
 export const DEFAULT_SETTINGS: Settings = {
   language: "system",
-  theme: "system",
   closeBehavior: "exit",
   lruSize: 3,
 };
