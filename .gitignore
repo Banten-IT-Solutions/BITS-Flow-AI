@@ -1,0 +1,25 @@
+# Node / build output
+node_modules/
+dist/
+dist-ssr/
+
+# Paraglide generated messages
+src/lib/paraglide/
+
+# Tauri / Rust
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+
+# Env and release scratch
+.env
+.env.*
+!.env.example
+*.local
+.release-version
+project.inlang/cache/
