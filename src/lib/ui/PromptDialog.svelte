@@ -72,7 +72,7 @@
       <input class="input" bind:value={title} required />
     </label>
     <div class="grid grid-cols-12 gap-3">
-      <label class="col-span-8 flex flex-col gap-1.5">
+      <label class="col-span-10 flex flex-col gap-1.5">
         <span class="text-sm font-medium">{m.commonCategory()}</span>
         <Select
           ariaLabel={m.commonCategory()}
@@ -83,10 +83,15 @@
           }))}
         />
       </label>
-      <div class="col-span-4 flex flex-col gap-1.5">
-        <span class="text-sm font-medium">{m.promptsPinned()}</span>
+      <div class="col-span-2 flex flex-row items-center justify-end gap-1.5 pt-6">
+        <span class="sr-only">{m.promptsPinned()}</span>
         <label class="flex h-9 cursor-pointer items-center select-none">
-          <input type="checkbox" class="peer sr-only" bind:checked={pinned} />
+          <input
+            type="checkbox"
+            class="peer sr-only"
+            aria-label={m.promptsPinned()}
+            bind:checked={pinned}
+          />
           <!-- Toggle switch: track + sliding knob, accent when pinned. -->
           <span
             class="relative inline-flex h-5 w-9 shrink-0 rounded-full border border-line bg-line transition-colors duration-150 after:absolute after:top-0.5 after:left-0.5 after:size-3.5 after:rounded-full after:bg-fg after:transition-transform after:duration-150 peer-checked:border-accent peer-checked:bg-accent peer-checked:after:translate-x-4 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-accent"
