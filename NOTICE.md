@@ -5,9 +5,9 @@ profiles. It was written from scratch for Banten IT Solutions and does not copy 
 code, assets, icons, or proprietary text from third-party products.
 
 Product names, provider names, and trademarks mentioned or linked in the default provider registry
-(Google Flow, Gemini, Suno, PixVerse, Leonardo, Krea, ImagineArt) belong to their respective owners.
-They are referenced for identification and interoperability only and do not imply endorsement or
-affiliation.
+(Google Flow, Gemini, Leonardo, Krea, Adobe Firefly, ChatGPT, Dola, Dreamina) belong to their
+respective owners. They are referenced for identification and interoperability only and do not
+imply endorsement or affiliation.
 
 ## Third-party software
 

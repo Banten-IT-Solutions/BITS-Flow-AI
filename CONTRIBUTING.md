@@ -51,14 +51,14 @@ cargo test
   strings. Indonesian is the base locale; English translations must stay complete.
 - Data model changes must keep `src/lib/types.ts` and `src-tauri/src/commands.rs` in sync, including
   serde `camelCase` field names.
-- Keep the light/dark theme tokens in `src/app.css` consistent; icons come from `@lucide/svelte`
+- Keep the dark theme tokens in `src/app.css` consistent; icons come from `@lucide/svelte`
   only.
 
 ## Tests
 
 - Add Vitest tests for pure frontend logic (locale resolution, provider filtering, and similar).
 - Add Rust unit tests for pure Rust logic (LRU eviction planning lives in `src-tauri/src/persona.rs`).
-- Manual smoke checklist for UI changes: switch language, switch theme, open two personas, exceed the
+- Manual smoke checklist for UI changes: switch language, open two personas, exceed the
   LRU cap, and confirm the oldest hidden persona window closes.
 
 ## Commits and pull requests

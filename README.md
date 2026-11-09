@@ -25,7 +25,8 @@
 ---
 
 BITS Flow AI is a Tauri 2 desktop app for managing isolated browser profiles for AI
-providers — Google Flow, Gemini, Suno, PixVerse, Leonardo, Krea, and more. Every account
+providers — Google Flow, Gemini, Leonardo, Krea, Adobe Firefly, ChatGPT, Dola,
+Dreamina, and more. Every account
 ("persona") gets its own WebKitGTK data directory, so cookies, localStorage, and login
 sessions never mix. Switching personas keeps sessions alive on disk: no re-login, ever.
 It replaces the classic "switch Chrome profile" routine with a purpose-built launcher
@@ -41,8 +42,10 @@ for daily free-tier AI image & video workflows.
 | **Generate Workspace**    | Image & Video tabs filter providers by category and launch with one prompt copy |
 | **Prompt Library**        | Save, pin, categorize, and copy prompts; reuse across providers                 |
 | **Bilingual UI**          | Bahasa Indonesia & English, configurable in Settings, follows system by default |
-| **Dark / Light Theme**    | Theme tokens follow system or fixed, applied live without restart               |
+| **Dark-only UI**          | Professional dark theme, locked for consistency across views                    |
 | **Engine Fallback**       | Per-provider engine: WebKitGTK webview or system Chrome subprocess              |
+| **Export & Import**       | Back up and restore accounts & prompts as JSON, in Settings                     |
+| **Update Checker**        | Compares the running version against GitHub Releases at startup                 |
 | **Local-first Storage**   | Accounts, providers, prompts, and settings as JSON in the app data dir          |
 
 ## 🛠️ Tech Stack
@@ -65,8 +68,12 @@ BITS-Flow-AI/
 │   ├── lib/
 │   │   ├── api.ts               # Zod schemas + typed invoke() wrappers
 │   │   ├── stores.ts            # Active menu, accounts, providers, prompts state
-│   │   ├── settings.ts          # Locale / theme resolution
+│   │   ├── settings.ts          # Locale resolution + category/filter helpers
+│   │   ├── transfer.ts          # Export/import payload parsing + id merge
+│   │   ├── updates.ts           # Semver compare + GitHub Releases check
+│   │   ├── launch.ts            # Persona window launching + recent tracking
 │   │   ├── types.ts             # Shared domain types
+│   │   ├── ui/                  # Select, EmptyState, dialogs, Menu, Toaster, ...
 │   │   ├── paraglide/           # Generated i18n output (git-ignored)
 │   │   └── views/               # Home, Accounts, Providers, Generate, Prompts, Settings
 │   ├── App.svelte               # Sidebar shell
@@ -94,7 +101,7 @@ BITS-Flow-AI/
 
 | Requirement | Notes                                                                          |
 | ----------- | ------------------------------------------------------------------------------ |
-| Node.js     | 24+ (LTS)                                                                      |
+| Node.js     | 20+ (CI uses 24 LTS)                                                           |
 | Rust        | Stable via [rustup](https://rustup.rs)                                         |
 | Linux deps  | `libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev` |
 
@@ -115,10 +122,11 @@ npm run tauri build   # produce .deb + .AppImage in src-tauri/target/release/bun
 ### First run
 
 1. Open **Accounts** and add your first persona (name + email).
-2. Open **Providers** — seeded defaults are ready (Flow, Gemini, Suno, PixVerse,
-   Leonardo, Krea, ImagineArt). Add your own if needed.
-3. On **Home**, pick a provider + persona, press **Open**. Log in inside the window —
-   the session persists in that persona's data dir.
+2. Open **Providers** — eight built-ins are seeded on first launch (Flow, Gemini,
+   Leonardo, Krea, Adobe Firefly, ChatGPT, Dola, Dreamina). Add your own if needed.
+3. On **Home**, click a persona card to open it with the last-used provider, or click
+   a row under **Recent** to reopen that exact provider + persona combination. Log in
+   inside the window — the session persists in that persona's data dir.
 
 ## 💻 Development
 
@@ -165,21 +173,23 @@ Automated dependency updates via `.github/dependabot.yml`:
 
 All app data lives in the XDG app-local data dir — nothing leaves the device:
 
-| Path                            | Contents                                      |
-| ------------------------------- | --------------------------------------------- |
-| `<data>/profiles.json`          | Persona accounts                              |
-| `<data>/providers.json`         | Provider registry (seeded on first run)       |
-| `<data>/prompts.json`           | Prompt library                                |
-| `<data>/settings.json`          | Language, theme, engine, close behavior, LRU  |
-| `<data>/profiles/<persona-id>/` | Per-account WebKitGTK data (cookies, storage) |
+| Path                            | Contents                                            |
+| ------------------------------- | --------------------------------------------------- |
+| `<data>/accounts.json`          | Persona accounts                                    |
+| `<data>/providers.json`         | Provider registry (8 built-ins seeded on first run) |
+| `<data>/prompts.json`           | Prompt library                                      |
+| `<data>/settings.json`          | Language, close behavior, persona window cache size |
+| `<data>/recent.json`            | Recently opened provider + persona combos (cap 50)  |
+| `<data>/profiles/<persona-id>/` | Per-account WebKitGTK data (cookies, storage)       |
 
 `<data>` resolves to `$XDG_DATA_HOME/id.co.bits.flowai` (typically
 `~/.local/share/id.co.bits.flowai`). Deleting a persona's folder resets that account
 to a logged-out state.
 
-In-app **Settings** cover: language (system / Indonesia / English), theme
-(system / light / dark), per-provider engine (webview / chrome), close behavior,
-and persona window cache size (LRU).
+In-app **Settings** cover: language (system / Indonesia / English), close button
+behavior (exit / hide), the persona window cache size (LRU), and JSON export/import
+for accounts & prompts. Per-provider engine (webview / chrome) is chosen in the
+**Providers** view.
 
 ## 🔄 CI/CD Workflows
 
