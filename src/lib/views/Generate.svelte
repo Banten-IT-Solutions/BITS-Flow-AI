@@ -59,7 +59,10 @@
 <svelte:window onkeydown={onkeydown} />
 
 <div class="view">
-  <h1 class="view-title">{m.menuGenerate()}</h1>
+  <div class="space-y-1">
+    <h1 class="view-title">{m.menuGenerate()}</h1>
+    <p class="view-desc">{m.generateDescription()}</p>
+  </div>
 
   <div class="inline-flex w-fit rounded-md border border-line bg-surface p-0.5">
     {#each [["image", m.generateImage()], ["video", m.generateVideo()]] as [id, label] (id)}

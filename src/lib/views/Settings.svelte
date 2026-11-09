@@ -159,7 +159,10 @@
 
 <div class="view">
   <div class="flex items-center justify-between gap-3">
-    <h1 class="view-title">{m.settingsTitle()}</h1>
+    <div class="space-y-1">
+      <h1 class="view-title">{m.settingsTitle()}</h1>
+      <p class="view-desc">{m.settingsDescription()}</p>
+    </div>
     {#if savedFlash}
       <span class="inline-flex items-center gap-1 text-xs text-accent">
         <Check class="size-4" />
