@@ -3,6 +3,13 @@
 All notable changes to BITS Flow AI are documented here. The format follows Keep a Changelog
 and the project uses semantic versioning.
 
+# [1.1.0](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.0.3...1.1.0) (2026-11-09)
+
+
+### Features
+
+* full UI/UX implementation ([d48e6ce](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/d48e6ced8de5df52b332fe6a992f60500ecd694f))
+
 ## [1.0.3](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.0.2...1.0.3) (2026-11-09)
 
 
