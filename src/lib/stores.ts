@@ -1,4 +1,5 @@
 import { get, writable } from "svelte/store";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { getSettings, listAccounts, listPrompts, listProviders, listRecent } from "./api";
 import { m } from "./paraglide/messages";
 import { resolveLocale, resolveTheme } from "./settings";
@@ -52,14 +53,34 @@ export async function loadAll(): Promise<void> {
   uiLocale.set(applyLocale());
 }
 
-const darkQuery =
-  typeof window !== "undefined" && typeof window.matchMedia === "function"
-    ? window.matchMedia("(prefers-color-scheme: dark)")
-    : null;
+/**
+ * System theme, resolved from the Tauri window (backed by the XDG
+ * color-scheme portal). The prefers-color-scheme media query is not used:
+ * on WebKitGTK it is derived from GTK settings that two writers keep
+ * flipping (the theme-name heuristic reads Mint-Y-Dark-Aqua as light while
+ * the portal says prefer-dark), so following it makes the whole window
+ * flicker light<->dark. ponytail: revisit if WebKitGTK ships a stable
+ * color-scheme source.
+ */
+let systemThemeDark: boolean | null = null;
+
+async function resolveSystemThemeDark(): Promise<void> {
+  try {
+    systemThemeDark = (await getCurrentWindow().theme()) === "dark";
+  } catch {
+    // Outside Tauri (or theme API unavailable): fall back to a one-shot
+    // matchMedia read; it is only a hint, never a live signal we follow.
+    systemThemeDark =
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+  applyTheme();
+}
 
 export function applyTheme() {
   const { theme } = get(settings);
-  const resolved = resolveTheme(theme, darkQuery?.matches ?? false);
+  const resolved = resolveTheme(theme, systemThemeDark ?? false);
   if (typeof document !== "undefined") {
     document.documentElement.dataset.theme = resolved;
   }
@@ -72,8 +93,18 @@ export function applyLocale() {
 }
 
 export function initSystemListeners(): () => void {
-  if (!darkQuery) return () => {};
-  const onChange = () => applyTheme();
-  darkQuery.addEventListener("change", onChange);
-  return () => darkQuery.removeEventListener("change", onChange);
+  // Resolve the real system preference once (portal-backed) and follow
+  // Tauri theme events; never the WebKitGTK media query (see above).
+  void resolveSystemThemeDark();
+  let unlisten: (() => void) | null = null;
+  void getCurrentWindow()
+    .onThemeChanged((e) => {
+      systemThemeDark = e.payload === "dark";
+      applyTheme();
+    })
+    .then((fn) => {
+      unlisten = fn;
+    })
+    .catch(() => {});
+  return () => unlisten?.();
 }
