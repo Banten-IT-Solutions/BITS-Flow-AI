@@ -97,5 +97,6 @@
   "errorNoDataDir": "Tidak ada data untuk persona ini.",
   "errorsLoadFailed": "Gagal memuat data. Coba mulai ulang aplikasi.",
   "updateAvailable": "Versi {version} tersedia",
-  "updateAction": "Perbarui"
+  "updateAction": "Perbarui",
+  "appVersion": "Versi {version}"
 }

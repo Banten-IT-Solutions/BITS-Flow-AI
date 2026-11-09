@@ -97,5 +97,6 @@
   "errorNoDataDir": "No data found for this persona.",
   "errorsLoadFailed": "Could not load your data. Try restarting the app.",
   "updateAvailable": "Version {version} is available",
-  "updateAction": "Update"
+  "updateAction": "Update",
+  "appVersion": "Version {version}"
 }

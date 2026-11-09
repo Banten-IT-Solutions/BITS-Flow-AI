@@ -138,9 +138,10 @@
     </ul>
 
     <div class="mt-auto flex items-center justify-between gap-2 border-t border-line px-4 py-3">
-      <span class="truncate text-xs font-medium text-muted" title="BITS Flow AI">
-        BITS Flow AI - {pkg.version}
-      </span>
+      <div class="min-w-0 leading-tight">
+        <div class="truncate text-xs font-semibold">BITS Flow AI</div>
+        <div class="truncate text-xs text-muted">{m.appVersion({ version: pkg.version })}</div>
+      </div>
       {#if updateVersion}
         <button
           type="button"
