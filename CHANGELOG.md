@@ -3,6 +3,13 @@
 All notable changes to BITS Flow AI are documented here. The format follows Keep a Changelog
 and the project uses semantic versioning.
 
+## [1.1.5](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.1.4...1.1.5) (2026-11-09)
+
+
+### Bug Fixes
+
+* resolve system theme from portal-backed window theme, not matchMedia ([90874a6](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/90874a6e53f94bfd23e7ec74481b17c64265c8d2)), closes [fafafa/#ffffff](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/issues/ffffff) [0e0e10/#17171a](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/issues/17171a)
+
 ## [1.1.4](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.1.3...1.1.4) (2026-11-09)
 
 
