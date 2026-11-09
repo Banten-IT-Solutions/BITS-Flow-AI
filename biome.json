@@ -11,7 +11,9 @@
       "!**/build",
       "!**/src/lib/paraglide",
       "!**/src-tauri/target",
-      "!**/*.svelte"
+      "!**/*.svelte",
+      "!CHANGELOG.md",
+      "!package-lock.json"
     ]
   },
   "formatter": {
