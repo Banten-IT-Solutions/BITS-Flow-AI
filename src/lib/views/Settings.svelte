@@ -90,7 +90,7 @@
 
   <section class="card space-y-3">
     <h2 class="section-title">{m.settingsGeneral()}</h2>
-    <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+    <div class="grid grid-cols-3 gap-x-6 gap-y-4">
       <label class="flex flex-col gap-1">
         <span class="text-sm font-medium">{m.settingsLanguage()}</span>
         <Select
@@ -116,7 +116,7 @@
           onchange={(v) => void patch({ closeBehavior: v as Settings["closeBehavior"] })}
         />
       </label>
-      <label class="flex max-w-48 flex-col gap-1">
+      <label class="flex flex-col gap-1">
         <span class="text-sm font-medium">{m.settingsLruSize()}</span>
         <input
           class="input"
