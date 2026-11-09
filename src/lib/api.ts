@@ -75,14 +75,6 @@ export function openPersona(personaId: string, url: string, engine: "webview" | 
   return invoke("open_persona", { personaId, url, engine }).then(openPersonaResultSchema.parse);
 }
 
-export function switchPersonaProvider(personaId: string, url: string) {
-  return invoke("switch_persona_provider", { personaId, url });
-}
-
-export function personaState(personaId: string) {
-  return invoke<string | null>("persona_state", { personaId });
-}
-
 export const recentEntrySchema = z.object({
   providerId: z.string().min(1),
   personaId: z.string().min(1),
