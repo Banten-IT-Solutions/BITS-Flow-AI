@@ -3,6 +3,13 @@
 All notable changes to BITS Flow AI are documented here. The format follows Keep a Changelog
 and the project uses semantic versioning.
 
+## [1.1.1](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.1.0...1.1.1) (2026-11-09)
+
+
+### Bug Fixes
+
+* force software WebKit rendering to stop window blink-crash on Linux GPU stacks ([a812d0a](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/a812d0a835e6f0102291dc0ac188e2b740b4e53d))
+
 # [1.1.0](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.0.3...1.1.0) (2026-11-09)
 
 
