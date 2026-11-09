@@ -72,6 +72,10 @@
       .then(() => setLocale(get(uiLocale), { reload: false }))
       .catch((e) => console.error("init failed", e));
     void checkForUpdate(pkg.version).then((update) => (updateVersion = update));
+    // Re-check periodically so long-running sessions still see new releases.
+    const updateTimer = window.setInterval(() => {
+      void checkForUpdate(pkg.version).then((update) => (updateVersion = update));
+    }, 12 * 60 * 60 * 1000);
     void refreshOpenPersonas();
     // Persona windows can be closed outside this view; Rust emits this event
     // so the Home badge stays accurate.
@@ -80,6 +84,7 @@
       unlisten = fn;
     });
     return () => {
+      window.clearInterval(updateTimer);
       unlisten?.();
     };
   });
