@@ -16,6 +16,7 @@ use tauri::{
 };
 
 use crate::commands;
+use crate::paste_fallback;
 
 /// Toolbar strip height in logical pixels — one standard toolbar row.
 const BAR_HEIGHT: f64 = 36.0;
@@ -160,6 +161,7 @@ pub fn open_persona(
                 format!("{label}-page"),
                 WebviewUrl::External(parsed.clone()),
             )
+            .initialization_script(paste_fallback::PASTE_FALLBACK_SCRIPT)
             .data_directory(profile_dir);
             if engine == "chrome" {
                 page = page.user_agent(CHROME_USER_AGENT);

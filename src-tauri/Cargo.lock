@@ -265,6 +265,7 @@ dependencies = [
 name = "bits-flow-ai"
 version = "1.6.0"
 dependencies = [
+ "base64 0.21.7",
  "gtk",
  "serde",
  "serde_json",

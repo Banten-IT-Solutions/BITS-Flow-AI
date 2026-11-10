@@ -1,0 +1,121 @@
+//! Clipboard image paste fallback for persona page webviews.
+//!
+//! WebKitGTK does not expose native clipboard images as files in the JS
+//! `paste` event (`clipboardData.files/items` stay empty), so provider
+//! editors (e.g. Gemini) see an empty paste. This module registers an
+//! inlined plugin that serves the GTK clipboard image as base64 PNG, and
+//! an initialization script that synthesizes a real `paste` event with a
+//! `File` when the native event carries none.
+//! ponytail: upgrade path from `src/lib/clipboard.ts` (cross-platform
+//! would need tauri-plugin-clipboard-manager; we reuse gtk instead).
+//! Trust boundary: remote pages granted this permission could read
+//! clipboard image bytes at any time — acceptable only because users
+//! explicitly open those providers in persona windows.
+//! ponytail: main-frame only (cross-origin iframe editors not covered);
+//! non-Linux returns None (native paste expected to work there).
+
+/// Priority order of clipboard image MIME targets to accept.
+const IMAGE_TARGETS: [&str; 4] = ["image/png", "image/jpeg", "image/bmp", "image/tiff"];
+
+/// Pick the first clipboard image target worth fetching, by priority.
+fn pick_image_target<'a, T: AsRef<str>>(names: &'a [T]) -> Option<&'a str> {
+    IMAGE_TARGETS
+        .iter()
+        .find(|t| names.iter().any(|n| n.as_ref() == **t))
+        .copied()
+}
+
+pub const PASTE_FALLBACK_SCRIPT: &str = r#"
+(() => {
+  if (window.__BITS_PASTE__) return;
+  window.__BITS_PASTE__ = true;
+  const invoke = window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke;
+  if (!invoke) return;
+  document.addEventListener('paste', (ev) => {
+    if (!ev.isTrusted) return;
+    const items = ev.clipboardData && ev.clipboardData.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.kind === 'file' || item.kind === 'string') return;
+    }
+    // WebKitGTK bug: no clipboard image in the event. Swallow the empty
+    // paste and re-dispatch one carrying the clipboard image as a File.
+    ev.stopImmediatePropagation();
+    invoke('plugin:paste-fallback|read_clipboard_image')
+      .then((b64) => {
+        if (!b64) return;
+        const bin = atob(b64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        const dt = new DataTransfer();
+        dt.items.add(new File([bytes], 'clipboard-image.png', { type: 'image/png' }));
+        (document.activeElement || document.body).dispatchEvent(
+          new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: dt })
+        );
+      })
+      .catch(() => {});
+  }, true);
+})();
+"#;
+
+/// Return the GTK clipboard image as base64 PNG, or None when the
+/// clipboard holds no image. Runs on the command thread; GTK calls are
+/// hopped to the main thread.
+#[tauri::command]
+pub fn read_clipboard_image(window: tauri::WebviewWindow) -> Result<Option<String>, String> {
+    #[cfg(not(target_os = "linux"))]
+    {
+        let _ = &window;
+        Ok(None)
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        use std::sync::mpsc;
+
+        let (tx, rx) = mpsc::channel();
+        window
+            .run_on_main_thread(move || {
+                let bytes = read_clipboard_image_gtk();
+                let _ = tx.send(bytes);
+            })
+            .map_err(|e| e.to_string())?;
+        let bytes = rx
+            .recv_timeout(std::time::Duration::from_millis(1500))
+            .map_err(|_| "clipboard read timed out".to_string())?;
+        Ok(bytes.map(|b| {
+            use base64::Engine as _;
+            base64::engine::general_purpose::STANDARD.encode(b)
+        }))
+    }
+}
+
+/// GTK clipboard read; main thread only.
+#[cfg(target_os = "linux")]
+fn read_clipboard_image_gtk() -> Option<Vec<u8>> {
+    let clipboard = gtk::Clipboard::get(&gtk::gdk::SELECTION_CLIPBOARD);
+    let targets = clipboard.wait_for_targets()?;
+    let names: Vec<String> = targets.iter().map(|a| a.name().to_string()).collect();
+    let target = pick_image_target(&names)?;
+    let data = clipboard.wait_for_contents(&gtk::gdk::Atom::intern(target))?;
+    let pixbuf = data.pixbuf()?;
+    pixbuf.save_to_bufferv("png", &[]).ok()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::pick_image_target;
+
+    #[test]
+    fn prefers_png_then_jpeg_then_none() {
+        assert_eq!(
+            pick_image_target(&["image/jpeg", "image/png"]),
+            Some("image/png")
+        );
+        assert_eq!(
+            pick_image_target(&["image/jpeg", "image/tiff"]),
+            Some("image/jpeg")
+        );
+        assert_eq!(pick_image_target(&["text/plain"]), None);
+    }
+}

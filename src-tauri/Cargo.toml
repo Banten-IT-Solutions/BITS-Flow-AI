@@ -22,6 +22,7 @@ tauri-plugin-single-instance = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 ureq = "2"
+base64 = "0.21"
 
 # GTK layout fix for persona child webviews (Window::default_vbox packing).
 # Must match the gtk version tauri/wry already links (0.18.x).
