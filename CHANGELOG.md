@@ -3,6 +3,13 @@
 All notable changes to BITS Flow AI are documented here. The format follows Keep a Changelog
 and the project uses semantic versioning.
 
+## [1.6.1](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.6.0...1.6.1) (2026-11-10)
+
+
+### Bug Fixes
+
+* paste clipboard images into persona page webviews ([65dec9a](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/65dec9a95081115b8357fb85fe17d405cf0ad7bc))
+
 # [1.6.0](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.5.4...1.6.0) (2026-11-09)
 
 
