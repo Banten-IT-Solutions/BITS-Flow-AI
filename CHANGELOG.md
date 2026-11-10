@@ -3,6 +3,13 @@
 All notable changes to BITS Flow AI are documented here. The format follows Keep a Changelog
 and the project uses semantic versioning.
 
+## [1.6.2](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.6.1...1.6.2) (2026-11-10)
+
+
+### Bug Fixes
+
+* intercept rich-editor pastes fully and emulate Chrome clipboard shape ([bd14f75](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/bd14f757ace36321005c8a6bc79c135931796ef7))
+
 ## [1.6.1](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.6.0...1.6.1) (2026-11-10)
 
 
