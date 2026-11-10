@@ -31,26 +31,48 @@ pub const PASTE_FALLBACK_SCRIPT: &str = r#"
   window.__BITS_PASTE__ = true;
   const invoke = window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke;
   if (!invoke) return;
+  const hasFile = (items) => {
+    for (const it of items) if (it.kind === 'file') return true;
+    return false;
+  };
+  // Copy every string payload so pure-text pastes survive the intercept.
+  const harvest = (dt) => {
+    const out = [];
+    for (const t of dt.types) {
+      if (t === 'Files') continue;
+      const d = dt.getData(t);
+      if (d) out.push([t, d]);
+    }
+    return out;
+  };
   document.addEventListener('paste', (ev) => {
     if (!ev.isTrusted) return;
-    const items = ev.clipboardData && ev.clipboardData.items;
-    if (!items) return;
-    for (const item of items) {
-      if (item.kind === 'file' || item.kind === 'string') return;
-    }
-    // WebKitGTK bug: no clipboard image in the event. Swallow the empty
-    // paste and re-dispatch one carrying the clipboard image as a File.
+    const dt = ev.clipboardData;
+    if (!dt) return;
+    if (hasFile(dt.items)) return; // native image paste already works
+    const el = document.activeElement;
+    // Plain inputs/textareas can only take text; keep their native paste.
+    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) return;
+    const strings = harvest(dt);
+    // Must cancel both: without preventDefault WebKitGTK still runs the
+    // default paste and dumps raw html/img into the editor.
+    ev.preventDefault();
     ev.stopImmediatePropagation();
     invoke('plugin:paste-fallback|read_clipboard_image')
       .then((b64) => {
-        if (!b64) return;
-        const bin = atob(b64);
-        const bytes = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-        const dt = new DataTransfer();
-        dt.items.add(new File([bytes], 'clipboard-image.png', { type: 'image/png' }));
+        const out = new DataTransfer();
+        if (b64) {
+          const bin = atob(b64);
+          const bytes = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+          out.items.add(new File([bytes], 'clipboard-image.png', { type: 'image/png' }));
+          try { out.setData('Files', ''); } catch {} // Chrome-style pseudo type
+        }
+        for (const [t, d] of strings) {
+          try { out.setData(t, d); } catch {}
+        }
         (document.activeElement || document.body).dispatchEvent(
-          new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: dt })
+          new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: out })
         );
       })
       .catch(() => {});
