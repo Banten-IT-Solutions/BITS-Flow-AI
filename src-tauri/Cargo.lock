@@ -263,7 +263,7 @@ dependencies = [
 
 [[package]]
 name = "bits-flow-ai"
-version = "1.6.4"
+version = "1.6.5"
 dependencies = [
  "base64 0.21.7",
  "gtk",
