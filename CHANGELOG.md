@@ -3,6 +3,13 @@
 All notable changes to BITS Flow AI are documented here. The format follows Keep a Changelog
 and the project uses semantic versioning.
 
+## [1.6.4](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.6.3...1.6.4) (2026-11-12)
+
+
+### Bug Fixes
+
+* allow OAuth popups in persona page webviews ([18f46ea](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/18f46ea0659eb90b5bc0ba89ef94706d5e36bf44))
+
 ## [1.6.3](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.6.2...1.6.3) (2026-11-12)
 
 
