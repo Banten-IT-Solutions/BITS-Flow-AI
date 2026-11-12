@@ -97,22 +97,18 @@ fn main() {
         let keyval = event.keyval();
         let paste = state.contains(gtk::gdk::ModifierType::CONTROL_MASK)
             && (keyval == gtk::gdk::keys::constants::v || keyval == gtk::gdk::keys::constants::V);
-        if paste {
-            if let Some(png) = read_clipboard_image_gtk() {
-                gtk::glib::signal::signal_stop_emission_by_name(view, "key-press-event");
-                use base64::Engine as _;
-                let b64 = base64::engine::general_purpose::STANDARD.encode(png);
-                eval_view.evaluate_javascript(
-                    &format!(
-                        "window.__BITS_PASTE_INJECT__ && window.__BITS_PASTE_INJECT__({b64:?})"
-                    ),
-                    None,
-                    None,
-                    None::<&gtk::gio::Cancellable>,
-                    |_| {},
-                );
-                return gtk::glib::Propagation::Stop;
-            }
+        if paste && let Some(png) = read_clipboard_image_gtk() {
+            gtk::glib::signal::signal_stop_emission_by_name(view, "key-press-event");
+            use base64::Engine as _;
+            let b64 = base64::engine::general_purpose::STANDARD.encode(png);
+            eval_view.evaluate_javascript(
+                &format!("window.__BITS_PASTE_INJECT__ && window.__BITS_PASTE_INJECT__({b64:?})"),
+                None,
+                None,
+                None::<&gtk::gio::Cancellable>,
+                |_| {},
+            );
+            return gtk::glib::Propagation::Stop;
         }
         gtk::glib::Propagation::Proceed
     });

@@ -84,7 +84,7 @@ pub const PASTE_INJECT_SCRIPT: &str = r#"
 const IMAGE_TARGETS: [&str; 4] = ["image/png", "image/jpeg", "image/bmp", "image/tiff"];
 
 /// Pick the first clipboard image target worth fetching, by priority.
-fn pick_image_target<'a, T: AsRef<str>>(names: &'a [T]) -> Option<&'a str> {
+fn pick_image_target<T: AsRef<str>>(names: &[T]) -> Option<&'static str> {
     IMAGE_TARGETS
         .iter()
         .find(|t| names.iter().any(|n| n.as_ref() == **t))
