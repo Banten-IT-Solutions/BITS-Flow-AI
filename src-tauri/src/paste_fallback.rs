@@ -5,7 +5,11 @@
 //! editors (e.g. Gemini) see an empty paste. This module registers an
 //! inlined plugin that serves the GTK clipboard image as base64 PNG, and
 //! an initialization script that synthesizes a real `paste` event with a
-//! `File` when the native event carries none.
+//! `File` when the native event carries none. The synthetic event is a
+//! plain `Event` with `clipboardData` shadowed via defineProperty (WebKit's
+//! ClipboardEvent constructor drops init clipboardData), and when the page
+//! ignores it (`defaultPrevented` false) the fallback drives the page's own
+//! `input[type=file]` so the upload still goes through the site pipeline.
 //! ponytail: upgrade path from `src/lib/clipboard.ts` (cross-platform
 //! would need tauri-plugin-clipboard-manager; we reuse gtk instead).
 //! Trust boundary: remote pages granted this permission could read
@@ -71,9 +75,26 @@ pub const PASTE_FALLBACK_SCRIPT: &str = r#"
         for (const [t, d] of strings) {
           try { out.setData(t, d); } catch {}
         }
-        (document.activeElement || document.body).dispatchEvent(
-          new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: out })
-        );
+        // WebKit's ClipboardEvent constructor ignores clipboardData in the
+        // init dict (added only in Safari 17.4), so build a plain event and
+        // shadow the getter — handlers reading ev.clipboardData get ours.
+        const synth = new Event('paste', { bubbles: true, cancelable: true });
+        Object.defineProperty(synth, 'clipboardData', { value: out });
+        (document.activeElement || document.body).dispatchEvent(synth);
+        // Editors that ignore untrusted pastes leave defaultPrevented false;
+        // drive their own file input so the image still reaches the real
+        // upload pipeline instead of dying silently.
+        if (b64 && !synth.defaultPrevented) {
+          const inputs = document.querySelectorAll('input[type=file]');
+          const input =
+            [...inputs].find((i) => !i.accept || /image/i.test(i.accept)) || inputs[0];
+          if (input) {
+            try {
+              input.files = out.files;
+              input.dispatchEvent(new Event('change', { bubbles: true }));
+            } catch {}
+          }
+        }
       })
       .catch(() => {});
   }, true);
