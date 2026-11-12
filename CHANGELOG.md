@@ -3,6 +3,13 @@
 All notable changes to BITS Flow AI are documented here. The format follows Keep a Changelog
 and the project uses semantic versioning.
 
+## [1.6.3](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.6.2...1.6.3) (2026-11-12)
+
+
+### Bug Fixes
+
+* build paste events WebKit-safe and fall back to the page file input ([4d9f0aa](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/4d9f0aa9df8b71ecf94ad6bb0543a5576b5c3a39))
+
 ## [1.6.2](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.6.1...1.6.2) (2026-11-10)
 
 
