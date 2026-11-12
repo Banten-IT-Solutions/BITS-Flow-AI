@@ -10,6 +10,13 @@ and the project uses semantic versioning.
 
 * paste clipboard images through a GTK key hook, not IPC ([7d5063c](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/7d5063ce0add6658a040225eaf8efe786d785ce6))
 
+## [1.6.5](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.6.4...1.6.5) (2026-11-12)
+
+
+### Bug Fixes
+
+* paste clipboard images through a GTK key hook, not IPC ([7d5063c](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/7d5063ce0add6658a040225eaf8efe786d785ce6))
+
 ## [1.6.4](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.6.3...1.6.4) (2026-11-12)
 
 
