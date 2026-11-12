@@ -11,7 +11,7 @@
 //! Expected stdout: TITLE:PASTE:1:untrusted (or INPUT:1 if the page's paste
 //! handler does not preventDefault and the file-input tier takes over).
 
-use bits_flow_ai_lib::paste_fallback::{read_clipboard_image_gtk, PASTE_INJECT_SCRIPT};
+use bits_flow_ai_lib::paste_fallback::{PASTE_INJECT_SCRIPT, read_clipboard_image_gtk};
 use gtk::prelude::*;
 use webkit2gtk::{
     LoadEvent, UserContentInjectedFrames, UserContentManager, UserContentManagerExt, UserScript,
@@ -103,7 +103,9 @@ fn main() {
                 use base64::Engine as _;
                 let b64 = base64::engine::general_purpose::STANDARD.encode(png);
                 eval_view.evaluate_javascript(
-                    &format!("window.__BITS_PASTE_INJECT__ && window.__BITS_PASTE_INJECT__({b64:?})"),
+                    &format!(
+                        "window.__BITS_PASTE_INJECT__ && window.__BITS_PASTE_INJECT__({b64:?})"
+                    ),
                     None,
                     None,
                     None::<&gtk::gio::Cancellable>,
