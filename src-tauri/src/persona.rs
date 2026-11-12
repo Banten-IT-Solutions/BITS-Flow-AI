@@ -162,6 +162,18 @@ pub fn open_persona(
                 WebviewUrl::External(parsed.clone()),
             )
             .initialization_script(paste_fallback::PASTE_FALLBACK_SCRIPT)
+            // OAuth sign-in (Google, etc.) opens a popup via window.open.
+            // Without a handler wry never wires WebKitGTK's create signal,
+            // window.open returns null and providers show "Unable to sign
+            // in". Allow opens a related-view window sharing the persona
+            // session (cookies) and keeping window.opener alive.
+            .on_new_window(|url, _features| {
+                if matches!(url.scheme(), "http" | "https" | "about") {
+                    tauri::webview::NewWindowResponse::Allow
+                } else {
+                    tauri::webview::NewWindowResponse::Deny
+                }
+            })
             .data_directory(profile_dir);
             if engine == "chrome" {
                 page = page.user_agent(CHROME_USER_AGENT);
