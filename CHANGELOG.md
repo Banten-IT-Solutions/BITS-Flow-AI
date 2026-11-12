@@ -3,6 +3,13 @@
 All notable changes to BITS Flow AI are documented here. The format follows Keep a Changelog
 and the project uses semantic versioning.
 
+## [1.6.6](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.6.5...1.6.6) (2026-11-12)
+
+
+### Bug Fixes
+
+* satisfy clippy in the paste fallback and probe ([8add354](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/commit/8add354b14fc4a08a12e8f4fabe762b67a0a19cd))
+
 ## [1.6.5](https://github.com/Banten-IT-Solutions/BITS-Flow-AI/compare/1.6.4...1.6.5) (2026-11-12)
 
 
