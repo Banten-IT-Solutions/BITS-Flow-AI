@@ -1,8 +1,0 @@
-{
-  "$schema": "../gen/schemas/desktop-schema.json",
-  "identifier": "persona-page-paste",
-  "description": "Clipboard image paste fallback for remote persona pages",
-  "windows": ["persona-*"],
-  "remote": { "urls": ["https://*", "http://*"] },
-  "permissions": ["paste-fallback:allow-read-clipboard-image"]
-}

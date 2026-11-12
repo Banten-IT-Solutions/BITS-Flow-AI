@@ -1,5 +1,5 @@
 mod commands;
-mod paste_fallback;
+pub mod paste_fallback;
 mod persona;
 
 use persona::PersonaState;
@@ -19,13 +19,6 @@ pub fn run() {
             }
         }))
         .plugin(tauri_plugin_dialog::init())
-        .plugin(
-            tauri::plugin::Builder::<tauri::Wry>::new("paste-fallback")
-                .invoke_handler(tauri::generate_handler![
-                    paste_fallback::read_clipboard_image
-                ])
-                .build(),
-        )
         .manage(PersonaState::default())
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {

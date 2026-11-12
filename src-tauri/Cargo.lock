@@ -274,6 +274,7 @@ dependencies = [
  "tauri-plugin-dialog",
  "tauri-plugin-single-instance",
  "ureq",
+ "webkit2gtk",
 ]
 
 [[package]]

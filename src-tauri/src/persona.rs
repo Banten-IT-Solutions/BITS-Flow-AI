@@ -161,7 +161,7 @@ pub fn open_persona(
                 format!("{label}-page"),
                 WebviewUrl::External(parsed.clone()),
             )
-            .initialization_script(paste_fallback::PASTE_FALLBACK_SCRIPT)
+            .initialization_script(paste_fallback::PASTE_INJECT_SCRIPT)
             // OAuth sign-in (Google, etc.) opens a popup via window.open.
             // Without a handler wry never wires WebKitGTK's create signal,
             // window.open returns null and providers show "Unable to sign
@@ -178,13 +178,14 @@ pub fn open_persona(
             if engine == "chrome" {
                 page = page.user_agent(CHROME_USER_AGENT);
             }
-            window
+            let page_webview = window
                 .add_child(
                     page,
                     LogicalPosition::new(0.0, BAR_HEIGHT),
                     LogicalSize::new(1120.0, 760.0 - BAR_HEIGHT),
                 )
                 .map_err(|e| e.to_string())?;
+            paste_fallback::install_paste_hook(&page_webview);
             // tauri packs both children into a plain GtkBox (expand=true), so
             // the bounds above are ignored on Linux. Pin the real layout.
             #[cfg(target_os = "linux")]

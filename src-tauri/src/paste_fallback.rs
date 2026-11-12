@@ -2,21 +2,83 @@
 //!
 //! WebKitGTK does not expose native clipboard images as files in the JS
 //! `paste` event (`clipboardData.files/items` stay empty), so provider
-//! editors (e.g. Gemini) see an empty paste. This module registers an
-//! inlined plugin that serves the GTK clipboard image as base64 PNG, and
-//! an initialization script that synthesizes a real `paste` event with a
-//! `File` when the native event carries none. The synthetic event is a
-//! plain `Event` with `clipboardData` shadowed via defineProperty (WebKit's
-//! ClipboardEvent constructor drops init clipboardData), and when the page
-//! ignores it (`defaultPrevented` false) the fallback drives the page's own
-//! `input[type=file]` so the upload still goes through the site pipeline.
-//! ponytail: upgrade path from `src/lib/clipboard.ts` (cross-platform
-//! would need tauri-plugin-clipboard-manager; we reuse gtk instead).
-//! Trust boundary: remote pages granted this permission could read
-//! clipboard image bytes at any time — acceptable only because users
-//! explicitly open those providers in persona windows.
-//! ponytail: main-frame only (cross-origin iframe editors not covered);
-//! non-Linux returns None (native paste expected to work there).
+//! editors (e.g. Gemini) see an empty paste.
+//!
+//! The JS->Rust direction is a dead end here: Tauri's IPC on Linux is a
+//! `fetch` to `http://ipc.localhost`, which provider CSPs (`connect-src`)
+//! block, and a sync command would run inline on the main thread anyway.
+//! So the flow is inverted and never uses IPC:
+//!
+//! 1. `install_paste_hook` connects GTK `key-press-event` on the page
+//!    webview; on Ctrl+V it reads the GTK clipboard image (same toolkit as
+//!    the webview, works on X11 and Wayland) and stops the emission so
+//!    WebKitGTK cannot dump the image inline into the editor.
+//! 2. The image is base64-encoded and `eval`-ed into the page as
+//!    `window.__BITS_PASTE_INJECT__(b64)` — native evaluation is not
+//!    subject to the page CSP.
+//! 3. The injected function hands the image to the editor in three tiers:
+//!    a synthetic paste event carrying a real `File`, then the page's own
+//!    `input[type=file]` (+ change event), then a synthetic `drop`.
+//!
+//! ponytail: covers Ctrl+V in the main frame only; context-menu paste and
+//! cross-origin iframe editors are out of scope. Non-Linux returns early
+//! (native paste expected to work there).
+
+/// Init script: defines the injector called by the Rust paste hook.
+/// Built as plain `Event`s with the payload shadowed via `defineProperty`
+/// because WebKit's `ClipboardEvent`/`DragEvent` constructors drop
+/// `clipboardData`/`dataTransfer` from their init dicts (only Safari 17.4+).
+pub const PASTE_INJECT_SCRIPT: &str = r#"
+(() => {
+  if (window.__BITS_PASTE_INJECT__) return;
+  const fileInputs = () => {
+    const out = [];
+    const walk = (root) => {
+      for (const el of root.querySelectorAll('*')) {
+        if (el.tagName === 'INPUT' && el.type === 'file') out.push(el);
+        if (el.shadowRoot) walk(el.shadowRoot);
+        if (el.tagName === 'IFRAME') {
+          try {
+            if (el.contentDocument) walk(el.contentDocument);
+          } catch (e) {}
+        }
+      }
+    };
+    walk(document);
+    return out;
+  };
+  window.__BITS_PASTE_INJECT__ = (b64) => {
+    try {
+      const bin = atob(b64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const dt = new DataTransfer();
+      dt.items.add(new File([bytes], 'clipboard-image.png', { type: 'image/png' }));
+      try { dt.setData('Files', ''); } catch (e) {} // Chrome-style pseudo type
+      const target = document.activeElement || document.body;
+      const paste = new Event('paste', { bubbles: true, cancelable: true });
+      Object.defineProperty(paste, 'clipboardData', { value: dt });
+      target.dispatchEvent(paste);
+      if (paste.defaultPrevented) return 'paste';
+      const inputs = fileInputs();
+      const input = inputs.find((i) => !i.accept || /image/i.test(i.accept)) || inputs[0];
+      if (input) {
+        try {
+          input.files = dt.files;
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          return 'file-input';
+        } catch (e) {}
+      }
+      const drop = new Event('drop', { bubbles: true, cancelable: true });
+      Object.defineProperty(drop, 'dataTransfer', { value: dt });
+      target.dispatchEvent(drop);
+      return drop.defaultPrevented ? 'drop' : 'none';
+    } catch (e) {
+      return 'error';
+    }
+  };
+})();
+"#;
 
 /// Priority order of clipboard image MIME targets to accept.
 const IMAGE_TARGETS: [&str; 4] = ["image/png", "image/jpeg", "image/bmp", "image/tiff"];
@@ -29,113 +91,54 @@ fn pick_image_target<'a, T: AsRef<str>>(names: &'a [T]) -> Option<&'a str> {
         .copied()
 }
 
-pub const PASTE_FALLBACK_SCRIPT: &str = r#"
-(() => {
-  if (window.__BITS_PASTE__) return;
-  window.__BITS_PASTE__ = true;
-  const invoke = window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke;
-  if (!invoke) return;
-  const hasFile = (items) => {
-    for (const it of items) if (it.kind === 'file') return true;
-    return false;
-  };
-  // Copy every string payload so pure-text pastes survive the intercept.
-  const harvest = (dt) => {
-    const out = [];
-    for (const t of dt.types) {
-      if (t === 'Files') continue;
-      const d = dt.getData(t);
-      if (d) out.push([t, d]);
-    }
-    return out;
-  };
-  document.addEventListener('paste', (ev) => {
-    if (!ev.isTrusted) return;
-    const dt = ev.clipboardData;
-    if (!dt) return;
-    if (hasFile(dt.items)) return; // native image paste already works
-    const el = document.activeElement;
-    // Plain inputs/textareas can only take text; keep their native paste.
-    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) return;
-    const strings = harvest(dt);
-    // Must cancel both: without preventDefault WebKitGTK still runs the
-    // default paste and dumps raw html/img into the editor.
-    ev.preventDefault();
-    ev.stopImmediatePropagation();
-    invoke('plugin:paste-fallback|read_clipboard_image')
-      .then((b64) => {
-        const out = new DataTransfer();
-        if (b64) {
-          const bin = atob(b64);
-          const bytes = new Uint8Array(bin.length);
-          for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-          out.items.add(new File([bytes], 'clipboard-image.png', { type: 'image/png' }));
-          try { out.setData('Files', ''); } catch {} // Chrome-style pseudo type
-        }
-        for (const [t, d] of strings) {
-          try { out.setData(t, d); } catch {}
-        }
-        // WebKit's ClipboardEvent constructor ignores clipboardData in the
-        // init dict (added only in Safari 17.4), so build a plain event and
-        // shadow the getter — handlers reading ev.clipboardData get ours.
-        const synth = new Event('paste', { bubbles: true, cancelable: true });
-        Object.defineProperty(synth, 'clipboardData', { value: out });
-        (document.activeElement || document.body).dispatchEvent(synth);
-        // Editors that ignore untrusted pastes leave defaultPrevented false;
-        // drive their own file input so the image still reaches the real
-        // upload pipeline instead of dying silently.
-        if (b64 && !synth.defaultPrevented) {
-          const inputs = document.querySelectorAll('input[type=file]');
-          const input =
-            [...inputs].find((i) => !i.accept || /image/i.test(i.accept)) || inputs[0];
-          if (input) {
-            try {
-              input.files = out.files;
-              input.dispatchEvent(new Event('change', { bubbles: true }));
-            } catch {}
-          }
-        }
-      })
-      .catch(() => {});
-  }, true);
-})();
-"#;
+/// Hook Ctrl+V on the page webview: read the clipboard image and hand it to
+/// the page injector instead of letting WebKitGTK paste it inline.
+#[cfg(target_os = "linux")]
+pub fn install_paste_hook(webview: &tauri::Webview) {
+    let dispatcher = webview.clone();
+    let _ = webview.with_webview(move |platform| {
+        use gtk::glib::signal::signal_stop_emission_by_name;
+        use gtk::prelude::*;
 
-/// Return the GTK clipboard image as base64 PNG, or None when the
-/// clipboard holds no image. Runs on the command thread; GTK calls are
-/// hopped to the main thread.
-#[tauri::command]
-pub fn read_clipboard_image(window: tauri::WebviewWindow) -> Result<Option<String>, String> {
-    #[cfg(not(target_os = "linux"))]
-    {
-        let _ = &window;
-        Ok(None)
-    }
-
-    #[cfg(target_os = "linux")]
-    {
-        use std::sync::mpsc;
-
-        let (tx, rx) = mpsc::channel();
-        window
-            .run_on_main_thread(move || {
-                let bytes = read_clipboard_image_gtk();
-                let _ = tx.send(bytes);
-            })
-            .map_err(|e| e.to_string())?;
-        let bytes = rx
-            .recv_timeout(std::time::Duration::from_millis(1500))
-            .map_err(|_| "clipboard read timed out".to_string())?;
-        Ok(bytes.map(|b| {
+        let webview = dispatcher.clone();
+        let view = platform.inner();
+        view.connect_key_press_event(move |view, event| {
+            if !is_paste_shortcut(event) {
+                return gtk::glib::Propagation::Proceed;
+            }
+            let Some(png) = read_clipboard_image_gtk() else {
+                return gtk::glib::Propagation::Proceed;
+            };
+            // WebKitGTK would insert the image inline into the editor;
+            // stop its paste and inject our file-carrying event instead.
+            signal_stop_emission_by_name(view, "key-press-event");
             use base64::Engine as _;
-            base64::engine::general_purpose::STANDARD.encode(b)
-        }))
-    }
+            let b64 = base64::engine::general_purpose::STANDARD.encode(png);
+            let _ = webview.eval(format!(
+                "window.__BITS_PASTE_INJECT__ && window.__BITS_PASTE_INJECT__({b64:?})"
+            ));
+            gtk::glib::Propagation::Stop
+        });
+    });
+}
+
+#[cfg(not(target_os = "linux"))]
+pub fn install_paste_hook(_webview: &tauri::Webview) {}
+
+/// Ctrl+V without Shift (Ctrl+Shift+V is paste-plain and stays native).
+#[cfg(target_os = "linux")]
+fn is_paste_shortcut(event: &gtk::gdk::EventKey) -> bool {
+    use gtk::gdk;
+    let state = event.state();
+    let keyval = event.keyval();
+    state.contains(gdk::ModifierType::CONTROL_MASK)
+        && !state.contains(gdk::ModifierType::SHIFT_MASK)
+        && (keyval == gdk::keys::constants::v || keyval == gdk::keys::constants::V)
 }
 
 /// GTK clipboard read; main thread only.
 #[cfg(target_os = "linux")]
-fn read_clipboard_image_gtk() -> Option<Vec<u8>> {
+pub fn read_clipboard_image_gtk() -> Option<Vec<u8>> {
     let clipboard = gtk::Clipboard::get(&gtk::gdk::SELECTION_CLIPBOARD);
     let targets = clipboard.wait_for_targets()?;
     let names: Vec<String> = targets.iter().map(|a| a.name().to_string()).collect();

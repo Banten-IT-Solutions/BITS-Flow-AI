@@ -36,3 +36,8 @@ lto = true
 opt-level = "s"
 panic = "abort"
 strip = true
+
+# Smoke-test harness only (examples/paste_probe.rs); already compiled as a
+# transitive dep of tauri/wry, so no extra build cost.
+[target.'cfg(target_os = "linux")'.dev-dependencies]
+webkit2gtk = "2"
